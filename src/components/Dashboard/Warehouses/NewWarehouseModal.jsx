@@ -7,8 +7,10 @@ import ErrorModal from "@/components/ErrorModal";
 import Loading from "@/components/Loading";
 import SuccessModal from "@/components/SuccessModal";
 import { FaPen } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 function NewWarehouseModal({ managers, products }) {
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [name, setName] = useState();
   const [plot, setPlot] = useState();
   const [street, setStreet] = useState();
@@ -203,6 +205,9 @@ function NewWarehouseModal({ managers, products }) {
   return (
     <>
       <h3 className={`px-3 pb-3 mdl-title`}>Create Warehouse</h3>
+      <div className="px-3">
+        <LicenseCreationBanner actionName="warehouses & stores" />
+      </div>
       {/* Basic Info */}
 
       <div className="row justify-content-center">
@@ -436,7 +441,13 @@ function NewWarehouseModal({ managers, products }) {
       {!loading && !successful && (
         <div className="row pt-3 mt-3 justify-content-center">
           <div className="col-5">
-            <button className="submitbtn" onClick={onSubmitClick}>
+            <button
+              className="submitbtn"
+              onClick={onSubmitClick}
+              disabled={isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
+              style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+            >
               Create
             </button>
             <DialogActionTrigger asChild>

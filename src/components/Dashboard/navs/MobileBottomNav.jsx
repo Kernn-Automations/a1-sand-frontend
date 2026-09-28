@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './MobileBottomNav.module.css';
-import { Home, Package, Users, UserCheck, BarChart2 } from 'lucide-react';
+import { Home, Package, Users, UserCheck, BarChart2, FileText } from 'lucide-react';
 
 export default function MobileBottomNav() {
   const navigate = useNavigate();
@@ -22,6 +22,14 @@ export default function MobileBottomNav() {
       >
         <Home size={22} className={styles.icon} />
         <span>Home</span>
+      </button>
+
+      <button
+        className={`${styles.navItem} ${isActive('/sales') ? styles.active : ''}`}
+        onClick={() => navigate('/sales')}
+      >
+        <FileText size={22} className={styles.icon} />
+        <span>Sales</span>
       </button>
 
       <button

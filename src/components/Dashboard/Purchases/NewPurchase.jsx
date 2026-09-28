@@ -6,8 +6,10 @@ import ErrorModal from "@/components/ErrorModal";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import success from "../../../images/animations/SuccessAnimation.gif";
 import CustomSearchDropdown from "@/utils/CustomSearchDropDown";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 function NewPurchase({ navigate }) {
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [products, setProducts] = useState([]);
   const [availableProducts, setAvailableProducts] = useState([]);
   const [apiproducts, setApiproducts] = useState([]);
@@ -211,6 +213,8 @@ function NewPurchase({ navigate }) {
         <i className="bi bi-chevron-right"></i> + New Purchase Order
       </p>
 
+      <LicenseCreationBanner actionName="purchase orders" />
+
       {!loading && !showSuccess && (
         <>
           {/* Header Info */}
@@ -365,7 +369,13 @@ function NewPurchase({ navigate }) {
           {/* Submit/Cancel */}
           <div className="row m-0 p-3 pt-4 justify-content-center">
             <div className="col-3">
-              <button className="submitbtn" onClick={onSubmit}>
+              <button
+                className="submitbtn"
+                onClick={onSubmit}
+                disabled={isCreationDisabled}
+                title={isCreationDisabled ? disabledMessage : undefined}
+                style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+              >
                 Order
               </button>
               <button

@@ -14,18 +14,11 @@ import {
   Send,
   AlertCircle,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Package
 } from 'lucide-react';
 import { isAdmin } from '../../../utils/roleUtils';
-
-const DEFAULT_CONSTRUCTION_PRODUCTS = [
-  { id: 10, name: '20mm Metal Aggregate', SKU: 'ACM-20MM', unit: 'brass', basePrice: 3200, purchasePrice: 2600 },
-  { id: 11, name: '40mm Metal Aggregate', SKU: 'ACM-40MM', unit: 'brass', basePrice: 2800, purchasePrice: 2300 },
-  { id: 12, name: 'River Plastering Sand', SKU: 'ACM-RS-PLAST', unit: 'brass', basePrice: 5500, purchasePrice: 4600 },
-  { id: 13, name: 'River Brick Work / Slab Sand', SKU: 'ACM-RS-SLAB', unit: 'brass', basePrice: 4800, purchasePrice: 4000 },
-  { id: 14, name: 'Robo Sand / M-Sand', SKU: 'ACM-MSAND', unit: 'brass', basePrice: 3000, purchasePrice: 2400 },
-  { id: 15, name: 'Red Clay Brick', SKU: 'ACM-REDBRICK', unit: 'units', basePrice: 9.5, purchasePrice: 7.8 },
-];
+import { useLicense, LicenseCreationBanner } from '@/context/LicenseContext';
 
 const UNIT_OPTIONS = [
   { label: 'Brass (100 CFT)', value: 'brass' },
@@ -37,13 +30,14 @@ const UNIT_OPTIONS = [
 
 export default function MobileNewSalesOrder() {
   const navigate = useNavigate();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const token = localStorage.getItem('accessToken');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userIsAdmin = isAdmin(user);
 
   const [customers, setCustomers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
-  const [productsList, setProductsList] = useState(DEFAULT_CONSTRUCTION_PRODUCTS);
+  const [productsList, setProductsList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState(null);
@@ -67,16 +61,7 @@ export default function MobileNewSalesOrder() {
   const [remarks, setRemarks] = useState('');
 
   // Line items state
-  const [items, setItems] = useState([
-    {
-      productId: 10,
-      name: '20mm Metal Aggregate',
-      unit: 'brass',
-      quantity: 1,
-      unitPrice: 3200,
-      purchasePrice: 2600,
-    },
-  ]);
+  const [items, setItems] = useState([]);
 
   // Initial payment state
   const [hasInitialPayment, setHasInitialPayment] = useState(false);
@@ -112,9 +97,24 @@ export default function MobileNewSalesOrder() {
       }
       if (prodRes.status === 'fulfilled' && prodRes.value.data?.products) {
         const fetched = prodRes.value.data.products;
-        if (fetched.length > 0) {
-          setProductsList(fetched);
+        setProductsList(fetched || []);
+        if (fetched && fetched.length > 0) {
+          setItems([
+            {
+              productId: fetched[0].id,
+              name: fetched[0].name,
+              unit: fetched[0].unit || 'brass',
+              quantity: 1,
+              unitPrice: fetched[0].basePrice || fetched[0].price || 0,
+              purchasePrice: fetched[0].purchasePrice || 0,
+            },
+          ]);
+        } else {
+          setItems([]);
         }
+      } else {
+        setProductsList([]);
+        setItems([]);
       }
     } catch (err) {
       console.error('Error fetching initial data:', err);
@@ -133,7 +133,7 @@ export default function MobileNewSalesOrder() {
       productId: selected.id,
       name: selected.name,
       unit: selected.unit || 'brass',
-      unitPrice: selected.basePrice || 0,
+      unitPrice: selected.basePrice || selected.price || 0,
       purchasePrice: selected.purchasePrice || 0,
     };
     setItems(updated);
@@ -146,7 +146,8 @@ export default function MobileNewSalesOrder() {
   };
 
   const addItem = () => {
-    const firstProd = productsList[0] || DEFAULT_CONSTRUCTION_PRODUCTS[0];
+    if (productsList.length === 0) return;
+    const firstProd = productsList[0];
     setItems([
       ...items,
       {
@@ -154,7 +155,7 @@ export default function MobileNewSalesOrder() {
         name: firstProd.name,
         unit: firstProd.unit || 'brass',
         quantity: 1,
-        unitPrice: firstProd.basePrice || 0,
+        unitPrice: firstProd.basePrice || firstProd.price || 0,
         purchasePrice: firstProd.purchasePrice || 0,
       },
     ]);
@@ -243,8 +244,8 @@ export default function MobileNewSalesOrder() {
       return;
     }
 
-    if (items.length === 0) {
-      setErrorMsg('Please add at least one construction material');
+    if (productsList.length === 0 || items.length === 0) {
+      setErrorMsg('No products available. Please add products to the catalog before creating a sales order.');
       return;
     }
 
@@ -404,16 +405,20 @@ export default function MobileNewSalesOrder() {
             <button
               onClick={() => {
                 setSuccessOrder(null);
-                setItems([
-                  {
-                    productId: 10,
-                    name: '20mm Metal Aggregate',
-                    unit: 'brass',
-                    quantity: 1,
-                    unitPrice: 3200,
-                    purchasePrice: 2600,
-                  },
-                ]);
+                if (productsList.length > 0) {
+                  setItems([
+                    {
+                      productId: productsList[0].id,
+                      name: productsList[0].name,
+                      unit: productsList[0].unit || 'brass',
+                      quantity: 1,
+                      unitPrice: productsList[0].basePrice || productsList[0].price || 0,
+                      purchasePrice: productsList[0].purchasePrice || 0,
+                    },
+                  ]);
+                } else {
+                  setItems([]);
+                }
                 setHasInitialPayment(false);
                 setPaymentAmount('');
                 setSiteName('');
@@ -446,6 +451,7 @@ export default function MobileNewSalesOrder() {
       </div>
 
       <form onSubmit={handleSubmitOrder} style={styles.formContainer}>
+        <LicenseCreationBanner actionName="sales orders" />
         {errorMsg && (
           <div style={styles.errorBanner}>
             <AlertCircle size={18} style={{ marginRight: 8, flexShrink: 0 }} />
@@ -617,118 +623,158 @@ export default function MobileNewSalesOrder() {
             <h3 style={styles.cardTitle}>Construction Materials</h3>
           </div>
 
-          {items.map((item, idx) => {
-            const lineSubtotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
-            const lineCost = (parseFloat(item.quantity) || 0) * (parseFloat(item.purchasePrice) || 0);
-            const lineMargin = lineSubtotal - lineCost;
+          {productsList.length === 0 ? (
+            <div style={{
+              padding: '24px 16px',
+              textAlign: 'center',
+              background: '#fff7ed',
+              borderRadius: '10px',
+              border: '1px dashed #fdba74',
+              margin: '12px 0'
+            }}>
+              <Package size={36} color="#ea580c" style={{ margin: '0 auto 8px', display: 'block' }} />
+              <p style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: 700, color: '#9a3412' }}>
+                No Products Found in Catalog
+              </p>
+              <p style={{ margin: '0 0 14px 0', fontSize: '12px', color: '#c2410c' }}>
+                You have not added any products/materials yet. Please add materials in the Product Master before creating a sales order.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate('/products/add')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  background: '#ea580c',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <Plus size={16} /> Add Product to Catalog
+              </button>
+            </div>
+          ) : (
+            <>
+              {items.map((item, idx) => {
+                const lineSubtotal = (parseFloat(item.quantity) || 0) * (parseFloat(item.unitPrice) || 0);
+                const lineCost = (parseFloat(item.quantity) || 0) * (parseFloat(item.purchasePrice) || 0);
+                const lineMargin = lineSubtotal - lineCost;
 
-            return (
-              <div key={idx} style={styles.itemRowCard}>
-                <div style={styles.itemRowHeader}>
-                  <span style={styles.itemBadge}>Material #{idx + 1}</span>
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(idx)}
-                      style={styles.deleteBtn}
-                    >
-                      <Trash2 size={16} color="#ef4444" />
-                    </button>
-                  )}
-                </div>
+                return (
+                  <div key={idx} style={styles.itemRowCard}>
+                    <div style={styles.itemRowHeader}>
+                      <span style={styles.itemBadge}>Material #{idx + 1}</span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          style={styles.deleteBtn}
+                        >
+                          <Trash2 size={16} color="#ef4444" />
+                        </button>
+                      )}
+                    </div>
 
-                <label style={styles.label}>Material Name</label>
-                <select
-                  value={item.productId}
-                  onChange={(e) => handleProductChange(idx, e.target.value)}
-                  style={styles.selectInput}
-                >
-                  {productsList.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <label style={styles.label}>Unit</label>
+                    <label style={styles.label}>Material Name</label>
                     <select
-                      value={item.unit}
-                      onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                      value={item.productId}
+                      onChange={(e) => handleProductChange(idx, e.target.value)}
                       style={styles.selectInput}
                     >
-                      {UNIT_OPTIONS.map((u) => (
-                        <option key={u.value} value={u.value}>
-                          {u.label}
+                      {productsList.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
                         </option>
                       ))}
                     </select>
-                  </div>
 
-                  <div>
-                    <label style={styles.label}>Quantity</label>
-                    <input
-                      type="number"
-                      step="any"
-                      min="0.01"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
-                      style={styles.textInput}
-                      required
-                    />
-                  </div>
-                </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <div>
+                        <label style={styles.label}>Unit</label>
+                        <select
+                          value={item.unit}
+                          onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                          style={styles.selectInput}
+                        >
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u.value} value={u.value}>
+                              {u.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: userIsAdmin ? '1fr 1fr' : '1fr', gap: 10 }}>
-                  <div>
-                    <label style={styles.label}>Sale Price (₹/{item.unit}) *</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={item.unitPrice}
-                      onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
-                      style={{ ...styles.textInput, fontWeight: 700, color: '#0f172a' }}
-                      required
-                    />
-                  </div>
-
-                  {userIsAdmin && (
-                    <div>
-                      <label style={styles.label}>
-                        Purchase Cost (₹/{item.unit}) <span style={styles.adminTag}>Admin</span>
-                      </label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={item.purchasePrice}
-                        onChange={(e) => handleItemChange(idx, 'purchasePrice', e.target.value)}
-                        style={{ ...styles.textInput, backgroundColor: '#f8fafc', color: '#64748b' }}
-                      />
+                      <div>
+                        <label style={styles.label}>Quantity</label>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0.01"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
+                          style={styles.textInput}
+                          required
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
 
-                <div style={styles.lineItemSummary}>
-                  <span>Item Subtotal: <strong>₹{lineSubtotal.toLocaleString('en-IN')}</strong></span>
-                  {userIsAdmin && (
-                    <span style={{ color: lineMargin >= 0 ? '#16a34a' : '#dc2626' }}>
-                      Margin: ₹{lineMargin.toLocaleString('en-IN')}
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    <div style={{ display: 'grid', gridTemplateColumns: userIsAdmin ? '1fr 1fr' : '1fr', gap: 10 }}>
+                      <div>
+                        <label style={styles.label}>Sale Price (₹/{item.unit}) *</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={item.unitPrice}
+                          onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                          style={{ ...styles.textInput, fontWeight: 700, color: '#0f172a' }}
+                          required
+                        />
+                      </div>
 
-          <button
-            type="button"
-            onClick={addItem}
-            style={styles.addMaterialBtn}
-          >
-            <Plus size={18} style={{ marginRight: 6 }} />
-            + Add Another Material
-          </button>
+                      {userIsAdmin && (
+                        <div>
+                          <label style={styles.label}>
+                            Purchase Cost (₹/{item.unit}) <span style={styles.adminTag}>Admin</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={item.purchasePrice}
+                            onChange={(e) => handleItemChange(idx, 'purchasePrice', e.target.value)}
+                            style={{ ...styles.textInput, backgroundColor: '#f8fafc', color: '#64748b' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={styles.lineItemSummary}>
+                      <span>Item Subtotal: <strong>₹{lineSubtotal.toLocaleString('en-IN')}</strong></span>
+                      {userIsAdmin && (
+                        <span style={{ color: lineMargin >= 0 ? '#16a34a' : '#dc2626' }}>
+                          Margin: ₹{lineMargin.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={addItem}
+                style={styles.addMaterialBtn}
+              >
+                <Plus size={18} style={{ marginRight: 6 }} />
+                + Add Another Material
+              </button>
+            </>
+          )}
         </div>
 
         {/* 4. Live Financial Overview Card */}
@@ -814,13 +860,19 @@ export default function MobileNewSalesOrder() {
             <div style={{ padding: '0 0 80px 0' }}>
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || isCreationDisabled || productsList.length === 0 || items.length === 0}
+                title={isCreationDisabled ? disabledMessage : undefined}
                 style={{
                   ...styles.submitBtn,
-                  opacity: submitting ? 0.7 : 1,
+                  opacity: (submitting || isCreationDisabled || productsList.length === 0 || items.length === 0) ? 0.6 : 1,
+                  cursor: (submitting || isCreationDisabled || productsList.length === 0 || items.length === 0) ? 'not-allowed' : 'pointer',
                 }}
               >
-                {submitting ? 'Generating Sales Order...' : `Create Sales Order • ₹${totals.totalSale.toLocaleString('en-IN')}`}
+                {submitting
+                  ? 'Generating Sales Order...'
+                  : productsList.length === 0
+                  ? 'No Products in Catalog'
+                  : `Create Sales Order • ₹${totals.totalSale.toLocaleString('en-IN')}`}
               </button>
             </div>
           </div>

@@ -107,10 +107,10 @@ export default function StoreEmployeesHome() {
 
       {/* Statistics Cards */}
       <Flex wrap="wrap" justify="space-between" px={2} style={{ marginBottom: isMobile ? '16px' : '24px', gap: isMobile ? '10px' : '16px' }}>
-        <ReusableCard title="Managers" value={mockEmployeesData.managers.toString()} />
-        <ReusableCard title="Staff" value={mockEmployeesData.staff.toString()} color="blue.500" />
-        <ReusableCard title="Present Today" value={mockEmployeesData.presentToday.toString()} color="green.500" />
-        <ReusableCard title="On Leave" value={mockEmployeesData.onLeave.toString()} color="yellow.500" />
+        <ReusableCard title="Managers" value={stats.managers.toString()} />
+        <ReusableCard title="Staff" value={stats.staff.toString()} color="blue.500" />
+        <ReusableCard title="Present Today" value={stats.presentToday.toString()} color="green.500" />
+        <ReusableCard title="On Leave" value={stats.onLeave.toString()} color="yellow.500" />
       </Flex>
     </div>
   );

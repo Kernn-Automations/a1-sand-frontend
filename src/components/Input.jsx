@@ -239,6 +239,7 @@ function Input({ setLogin, setUser, setRole }) {
           localStorage.setItem(`passkey_registered_${userId}`, "true");
         }
 
+        sessionStorage.removeItem("license_modal_dismissed");
         localStorage.setItem("user", JSON.stringify(userPayload));
         if (setRole) setRole(userPayload.roles);
         setUser({

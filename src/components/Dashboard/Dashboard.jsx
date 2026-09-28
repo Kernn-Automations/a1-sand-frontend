@@ -2,6 +2,7 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import axios from "axios";
 
 import NavContainer from "./navs/NavContainer";
 import DashHeader from "./DashHeader";
@@ -15,8 +16,10 @@ import SettingRoutes from "./SettingsTab/SettingRoutes";
 import ReportsRoutes from "./Reports/ReportsRoutes";
 import LicenseBanner from "./Licensing/LicenseBanner";
 import LicenseLockoutOverlay from "./Licensing/LicenseLockoutOverlay";
+import LicenseActivationModal from "./Licensing/LicenseActivationModal";
 import PasskeyPromptModal from "./PasskeyPromptModal";
 import { isPasskeySupported } from "../../services/passkeyService";
+import { isAdmin } from "../../utils/roleUtils";
 
 // Lazy-loaded Routes
 const HomePage = lazy(() => import("./HomePage/HomePage"));
@@ -69,6 +72,54 @@ export default function Dashboard({
   const [tab, setTab] = useState("home");
   const [isMobile, setIsMobile] = useState(false);
   const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const [showLicenseModal, setShowLicenseModal] = useState(false);
+  const [licenseStatus, setLicenseStatus] = useState(null);
+
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+  // Check license and show activation popup when admin logs in
+  const fetchLicenseStatus = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/license/status`);
+      if (res.data?.success) {
+        setLicenseStatus(res.data.data);
+        return res.data.data;
+      }
+    } catch (err) {
+      console.warn("Could not fetch license status:", err.message);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const checkLicenseAndPrompt = async () => {
+      if (!storedUser) return;
+      const userObj = storedUser?.user || storedUser;
+      const isUserAdmin = isAdmin(userObj);
+
+      const lic = await fetchLicenseStatus();
+      if (!lic) return;
+
+      const isNoActiveLicense =
+        !lic.isValid ||
+        lic.status === "UNLICENSED" ||
+        lic.status === "EXPIRED" ||
+        lic.status === "LOCKED_OUT" ||
+        lic.status === "TAMPERED_LOCKED";
+
+      const isDismissed = sessionStorage.getItem("license_modal_dismissed");
+
+      // Whenever the admin logs in and there is no active license, show popup
+      if (isUserAdmin && isNoActiveLicense && !isDismissed) {
+        const timer = setTimeout(() => {
+          setShowLicenseModal(true);
+        }, 600);
+        return () => clearTimeout(timer);
+      }
+    };
+
+    checkLicenseAndPrompt();
+  }, [storedUser]);
 
   // Detect if new device is not registered for passkey and prompt user
   useEffect(() => {
@@ -85,7 +136,7 @@ export default function Dashboard({
     if (!isRegistered && !isDismissed) {
       const timer = setTimeout(() => {
         setShowPasskeyPrompt(true);
-      }, 1500);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [storedUser]);
@@ -154,6 +205,9 @@ export default function Dashboard({
           width: !isMobile ? "calc(100% - 72px)" : "100%",
         }}
       >
+        {/* Sticky Red Header License Warning */}
+        <LicenseBanner onOpenModal={() => setShowLicenseModal(true)} />
+
         <DashHeader
           user={storedUser}
           setTab={setTab}
@@ -161,8 +215,6 @@ export default function Dashboard({
           setAdmin={setAdmin}
           orgadmin={orgadmin}
         />
-
-        <LicenseBanner />
 
         <main
           style={{
@@ -289,8 +341,21 @@ export default function Dashboard({
       {/* Mobile Fixed Bottom Navigation */}
       {isMobile && <MobileBottomNav />}
 
-      {/* Global Hard Lockout Shield */}
+      {/* Global Hard Lockout Shield (if in HARD lockout mode) */}
       <LicenseLockoutOverlay />
+
+      {/* License Expired / Activate Software Popup Modal */}
+      {showLicenseModal && (
+        <LicenseActivationModal
+          isOpen={showLicenseModal}
+          onClose={() => {
+            sessionStorage.setItem("license_modal_dismissed", "true");
+            setShowLicenseModal(false);
+          }}
+          license={licenseStatus}
+          onRefreshLicense={fetchLicenseStatus}
+        />
+      )}
 
       {/* Auto-Prompt to Register New Device as Passkey */}
       {showPasskeyPrompt && (

@@ -13,9 +13,11 @@ import {
   FaEnvelope,
   FaSave,
 } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 function CreateEmployee({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
 
   const [form, setForm] = useState({
     name: "",
@@ -173,6 +175,10 @@ function CreateEmployee({ navigate }) {
         </span>
         <span>&rsaquo;</span>
         <span style={{ fontWeight: 600, color: "#0f172a" }}>Add Employee</span>
+      </div>
+
+      <div style={{ maxWidth: "760px", margin: "0 auto 16px auto" }}>
+        <LicenseCreationBanner actionName="staff members" />
       </div>
 
       {/* Main Form Container */}
@@ -450,7 +456,8 @@ function CreateEmployee({ navigate }) {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
               style={{
                 padding: "11px 28px",
                 borderRadius: "8px",
@@ -459,7 +466,8 @@ function CreateEmployee({ navigate }) {
                 color: "#ffffff",
                 fontWeight: 700,
                 fontSize: "14px",
-                cursor: loading ? "not-allowed" : "pointer",
+                cursor: (loading || isCreationDisabled) ? "not-allowed" : "pointer",
+                opacity: isCreationDisabled ? 0.6 : 1,
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",

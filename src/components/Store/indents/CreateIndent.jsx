@@ -7,9 +7,11 @@ import Loading from "@/components/Loading";
 import ErrorModal from "@/components/ErrorModal";
 import SuccessModal from "@/components/SuccessModal";
 import storeService from "../../../services/storeService";
+import { useLicense, LicenseCreationBanner } from "../../../context/LicenseContext";
 
 function CreateIndent({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -247,6 +249,9 @@ function CreateIndent({ navigate }) {
         <span onClick={() => navigate("/store/indents")}>Indents</span>{" "}
         <i className="bi bi-chevron-right"></i> Create Indent
       </p>
+      <div className="px-3">
+        <LicenseCreationBanner actionName="indents" />
+      </div>
 
       <div className="row m-0 p-3">
         <h5 className={styles.head}>Indent Details</h5>
@@ -464,7 +469,13 @@ function CreateIndent({ navigate }) {
       {!loading && (
         <div className="row m-0 p-3 justify-content-center">
           <div className="col-3">
-            <button className="submitbtn" onClick={handleCreate}>
+            <button
+              className="submitbtn"
+              onClick={handleCreate}
+              disabled={isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
+              style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
+            >
               Create Indent
             </button>
             <button

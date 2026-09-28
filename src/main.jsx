@@ -13,6 +13,8 @@ import { LightMode } from "@/components/ui/color-mode";
 import { Toaster } from "@/components/ui/toaster";
 import { LoadScript } from "@react-google-maps/api";
 
+import { LicenseProvider } from "./context/LicenseContext";
+
 const theme = {
   colorMode: "light",
   useSystemColorMode: false,
@@ -21,16 +23,18 @@ const theme = {
 const AppTree = (
   <StrictMode>
     <AuthProvider>
-      <BrowserRouter>
-        <DivisionProvider>
-          <Provider theme={theme}>
-            <LightMode>
-              <App />
-              <Toaster />
-            </LightMode>
-          </Provider>
-        </DivisionProvider>
-      </BrowserRouter>
+      <LicenseProvider>
+        <BrowserRouter>
+          <DivisionProvider>
+            <Provider theme={theme}>
+              <LightMode>
+                <App />
+                <Toaster />
+              </LightMode>
+            </Provider>
+          </DivisionProvider>
+        </BrowserRouter>
+      </LicenseProvider>
     </AuthProvider>
   </StrictMode>
 );

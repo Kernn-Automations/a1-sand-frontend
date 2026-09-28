@@ -14,6 +14,7 @@ import {
   FaPercent,
   FaInfoCircle,
 } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 const PRESET_UNITS = [
   { value: "brass", label: "Brass (100 cft)" },
@@ -28,6 +29,7 @@ const PRESET_UNITS = [
 
 function AddProduct({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const VITE_API = import.meta.env.VITE_API_URL;
 
   const [categories, setCategories] = useState([]);
@@ -207,6 +209,7 @@ function AddProduct({ navigate }) {
       )}
 
       {/* Main Form Box */}
+      <LicenseCreationBanner actionName="materials & products" />
       <div
         style={{
           background: "#ffffff",
@@ -535,7 +538,9 @@ function AddProduct({ navigate }) {
             <button
               type="submit"
               className={styles.btnPrimary}
-              disabled={loading}
+              disabled={loading || isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
+              style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
             >
               <FaSave /> {loading ? "Saving Material..." : "Save Material to Catalog"}
             </button>

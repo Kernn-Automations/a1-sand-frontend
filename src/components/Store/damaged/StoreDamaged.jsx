@@ -76,10 +76,10 @@ export default function StoreDamaged() {
 
       {/* Statistics Cards */}
       <Flex wrap="wrap" justify="space-between" px={2} style={{ marginBottom: '24px' }}>
-        <ReusableCard title="This Week" value={mockDamagedData.thisWeek.toString()} color="red.500" />
-        <ReusableCard title="This Month" value={mockDamagedData.thisMonth.toString()} color="orange.500" />
-        <ReusableCard title="Total Value Lost" value={`₹${mockDamagedData.totalValue.toLocaleString()}`} color="yellow.500" />
-        <ReusableCard title="Pending Reports" value={mockDamagedData.pendingReports.toString()} color="blue.500" />
+        <ReusableCard title="This Week" value={stats.thisWeek.toString()} color="red.500" />
+        <ReusableCard title="This Month" value={stats.thisMonth.toString()} color="orange.500" />
+        <ReusableCard title="Total Value Lost" value={`₹${stats.totalValue.toLocaleString()}`} color="yellow.500" />
+        <ReusableCard title="Pending Reports" value={stats.pendingReports.toString()} color="blue.500" />
       </Flex>
 
       {/* Report Form */}
@@ -255,23 +255,31 @@ export default function StoreDamaged() {
               </tr>
             </thead>
             <tbody>
-              {mockDamagedData.recentReports.map((report, i) => (
-                <tr key={i} style={{ background: i % 2 === 0 ? 'rgba(59, 130, 246, 0.03)' : 'transparent' }}>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{report.id}</td>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.product}</td>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.quantity} {report.unit}</td>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.reason}</td>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600, color: '#ef4444' }}>
-                    ₹{report.value.toLocaleString()}
+              {damagedReports.length > 0 ? (
+                damagedReports.map((report, i) => (
+                  <tr key={report.id || i} style={{ background: i % 2 === 0 ? 'rgba(59, 130, 246, 0.03)' : 'transparent' }}>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{report.id}</td>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.product}</td>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.quantity} {report.unit}</td>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{report.reason}</td>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600, color: '#ef4444' }}>
+                      ₹{(report.value || 0).toLocaleString()}
+                    </td>
+                    <td>
+                      <span className={`badge ${report.status === 'Approved' ? 'bg-success' : 'bg-warning'}`} style={{ fontFamily: 'Poppins', fontSize: '11px' }}>
+                        {report.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', color: '#6b7280' }}>{report.date || 'Today'}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '32px 16px', color: '#64748b', fontFamily: 'Poppins' }}>
+                    No damaged goods reports found.
                   </td>
-                  <td>
-                    <span className={`badge ${report.status === 'Approved' ? 'bg-success' : 'bg-warning'}`} style={{ fontFamily: 'Poppins', fontSize: '11px' }}>
-                      {report.status}
-                    </span>
-                  </td>
-                  <td style={{ fontFamily: 'Poppins', fontSize: '13px', color: '#6b7280' }}>{report.date}</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

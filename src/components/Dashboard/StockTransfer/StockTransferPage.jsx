@@ -3,9 +3,11 @@ import { useAuth } from "@/Auth";
 import "./StockTransferPage.css";
 import SuccessModal from "@/components/SuccessModal";
 import ErrorModal from "@/components/ErrorModal";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 function StockTransferPage({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [warehouses, setWarehouses] = useState([]);
   const [fromWarehouse, setFromWarehouse] = useState(null);
   const [toWarehouse, setToWarehouse] = useState(null);
@@ -179,6 +181,7 @@ function StockTransferPage({ navigate }) {
       </p>
       <div className="row m-0 p-3">
         <h4 className="mb-4">Stock Transfer</h4>
+        <LicenseCreationBanner actionName="stock transfers" />
         {loadingWarehouses ||
           (loadingInventory && (
             <div className="text-center my-3">
@@ -397,8 +400,10 @@ function StockTransferPage({ navigate }) {
             <div className="mt-4 text-end">
               <button
                 className="btn btn-primary"
-                disabled={submitting}
+                disabled={submitting || isCreationDisabled}
+                title={isCreationDisabled ? disabledMessage : undefined}
                 onClick={submitTransfer}
+                style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
               >
                 {submitting ? "Transferring..." : "Submit Stock Transfer"}
               </button>

@@ -11,9 +11,11 @@ import {
   FaCheck,
   FaSave,
 } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 export default function CreateCustomer({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [loading, setLoading] = useState(false);
   const [warehouses, setWarehouses] = useState([]);
   const [error, setError] = useState(null);
@@ -160,6 +162,8 @@ export default function CreateCustomer({ navigate }) {
           </button>
         </div>
       </div>
+
+      <LicenseCreationBanner actionName="contractors & customers" />
 
       {/* Form Card */}
       <div className={styles.formCard}>
@@ -441,8 +445,10 @@ export default function CreateCustomer({ navigate }) {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
               className={styles.primaryBtn}
+              style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
             >
               <FaSave /> {loading ? "Creating Customer..." : "Save & Register Customer"}
             </button>

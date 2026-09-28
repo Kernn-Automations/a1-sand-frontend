@@ -5,8 +5,10 @@ import { useAuth } from "@/Auth";
 import Loading from "@/components/Loading";
 import ErrorModal from "@/components/ErrorModal";
 import SuccessModal from "@/components/SuccessModal";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 function AddVendorModal({changeTrigger}) {
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [name, setName] = useState();
   const [plot, setPlot] = useState();
   const [street, setStreet] = useState();
@@ -113,6 +115,9 @@ function AddVendorModal({changeTrigger}) {
   return (
     <>
       <h3 className={`px-3 mdl-title`}>Create Vendor</h3>
+      <div className="px-3">
+        <LicenseCreationBanner actionName="vendors & suppliers" />
+      </div>
 
       {/* Vendor Basic Information */}
       <div className="row m-0 p-0">
@@ -221,6 +226,9 @@ function AddVendorModal({changeTrigger}) {
               type="submit"
               className="submitbtn"
               onClick={onSubmitClick}
+              disabled={isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
+              style={isCreationDisabled ? { opacity: 0.6, cursor: "not-allowed" } : undefined}
             >
               Create
             </button>

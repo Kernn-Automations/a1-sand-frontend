@@ -4,8 +4,10 @@ import ReusableCard from "../../ReusableCard";
 import styles from "../../Dashboard/HomePage/HomePage.module.css";
 import storeService from "../../../services/storeService";
 import { FaUserCheck, FaUserClock, FaSearch } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "../../../context/LicenseContext";
 
 export default function StoreCustomers() {
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [payload, setPayload] = useState({ storeId: "", name: "", mobile: "", area: "", pincode: "", address: "" });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -89,10 +91,10 @@ export default function StoreCustomers() {
 
       {/* Statistics Cards */}
       <Flex wrap="wrap" justify="space-between" px={2} style={{ marginBottom: '24px' }}>
-        <ReusableCard title="Total Customers" value={mockCustomersData.total.toString()} />
-        <ReusableCard title="KYC Pending" value={mockCustomersData.kycPending.toString()} color="yellow.500" />
-        <ReusableCard title="Active" value={mockCustomersData.active.toString()} color="green.500" />
-        <ReusableCard title="Rejected" value={mockCustomersData.rejected.toString()} color="red.500" />
+        <ReusableCard title="Total Customers" value={stats.total.toString()} />
+        <ReusableCard title="KYC Pending" value={stats.kycPending.toString()} color="yellow.500" />
+        <ReusableCard title="Active" value={stats.active.toString()} color="green.500" />
+        <ReusableCard title="Rejected" value={stats.rejected.toString()} color="red.500" />
       </Flex>
 
       {/* Search Bar */}
@@ -133,6 +135,7 @@ export default function StoreCustomers() {
       {/* Create Customer Form */}
       {showForm && (
         <div className={styles.orderStatusCard} style={{ marginBottom: '24px' }}>
+          <LicenseCreationBanner actionName="customers" />
           <h4 style={{ margin: 0, marginBottom: '20px', fontFamily: 'Poppins', fontWeight: 600, fontSize: '20px', color: 'var(--primary-color)' }}>
             Create New Customer
           </h4>
@@ -239,13 +242,16 @@ export default function StoreCustomers() {
             </div>
             <button
               className="btn btn-primary"
-              disabled={loading}
+              disabled={loading || isCreationDisabled}
+              title={isCreationDisabled ? disabledMessage : undefined}
               onClick={onCreateOrFind}
               style={{ 
                 fontFamily: 'Poppins',
                 padding: '12px 24px',
                 borderRadius: '8px',
-                marginTop: '8px'
+                marginTop: '8px',
+                opacity: (loading || isCreationDisabled) ? 0.6 : 1,
+                cursor: (loading || isCreationDisabled) ? 'not-allowed' : 'pointer'
               }}
             >
               {loading ? 'Processing...' : 'Create Customer'}
@@ -273,29 +279,33 @@ export default function StoreCustomers() {
               </tr>
             </thead>
             <tbody>
-              {mockCustomersData.recentCustomers.map((customer, i) => {
-                const statusInfo = getStatusBadge(customer.status);
-                return (
-                  <tr key={i} style={{ background: i % 2 === 0 ? 'rgba(59, 130, 246, 0.03)' : 'transparent' }}>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.id}</td>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.name}</td>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>
-                      {customer.mobile}
-                    </td>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>
-                      {customer.area}
-                    </td>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.orders}</td>
-                    <td>
-                      <span className={`badge ${statusInfo.class}`} style={{ fontFamily: 'Poppins', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {statusInfo.icon}
-                        {customer.status}
-                      </span>
-                    </td>
-                    <td style={{ fontFamily: 'Poppins', fontSize: '13px', color: '#6b7280' }}>{customer.lastOrder}</td>
-                  </tr>
-                );
-              })}
+              {customers.length > 0 ? (
+                customers.map((customer, i) => {
+                  const statusInfo = getStatusBadge(customer.status || 'Active');
+                  return (
+                    <tr key={customer.id || i} style={{ background: i % 2 === 0 ? 'rgba(59, 130, 246, 0.03)' : 'transparent' }}>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.id || customer.customerId}</td>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.name}</td>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{customer.mobile || customer.phone}</td>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px' }}>{customer.area || customer.city || 'N/A'}</td>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px', fontWeight: 600 }}>{customer.orders || 0}</td>
+                      <td>
+                        <span className={`badge ${statusInfo.class}`} style={{ fontFamily: 'Poppins', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          {statusInfo.icon}
+                          {customer.status || 'Active'}
+                        </span>
+                      </td>
+                      <td style={{ fontFamily: 'Poppins', fontSize: '13px', color: '#6b7280' }}>{customer.lastOrder || 'N/A'}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="7" style={{ textAlign: 'center', padding: '32px 16px', color: '#64748b', fontFamily: 'Poppins' }}>
+                    No customer records found. Click 'Create Customer' to add a customer.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

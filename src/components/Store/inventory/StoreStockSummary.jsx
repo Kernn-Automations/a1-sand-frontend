@@ -685,29 +685,20 @@ function StoreStockSummary() {
     setLoadingInvoice(true);
 
     try {
-      // Mocking backend call for now as requested
-      // In real implementation: const res = await storeService.getInvoiceDetails(invoiceId || orderId);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const mockData = {
-        invoiceNumber: invoiceId || `INV-${orderId}`,
-        date: new Date().toLocaleDateString("en-GB").replace(/\//g, "-"),
-        customerName: "Customer Name", // Will be updated when real data is available
-        items: [
-          { productName: "Product 1", quantity: 2, price: 500, total: 1000 },
-          { productName: "Product 2", quantity: 1, price: 1500, total: 1500 },
-        ],
-        subtotal: 2500,
-        tax: 0,
-        discount: 0,
-        total: 2500,
-      };
-
-      setSelectedInvoiceData(mockData);
+      if (storeId) {
+        const res = await storeService.getStoreInvoices(storeId, { invoiceNumber: invoiceId, orderId });
+        const invoicesList = res?.data?.invoices || res?.invoices || res?.data || [];
+        const found = Array.isArray(invoicesList) ? invoicesList.find(i => i.invoiceNumber === invoiceId || i.id === invoiceId || i.orderId === orderId) : null;
+        if (found) {
+          setSelectedInvoiceData(found);
+          return;
+        }
+      }
+      // If no details found, set empty
+      setSelectedInvoiceData(null);
     } catch (err) {
       console.error("Error fetching invoice details:", err);
+      setSelectedInvoiceData(null);
     } finally {
       setLoadingInvoice(false);
     }

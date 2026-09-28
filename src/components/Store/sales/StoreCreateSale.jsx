@@ -12,6 +12,7 @@ import settingsService from "../../../services/settingsService";
 import Loading from "../../Loading";
 import ErrorModal from "../../ErrorModal";
 import SuccessModal from "../../SuccessModal";
+import { useLicense, LicenseCreationBanner } from "../../../context/LicenseContext";
 import compressImageToUnder100KB from "@/services/compressImageUnder100kb";
 import {
   formatDateTimeIN,
@@ -191,6 +192,7 @@ function StepIndicator({ step, steps, isMobile }) {
 }
 
 export default function StoreCreateSale() {
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const singleStepCheckout = true;
   const [step, setStep] = useState(0);
 
@@ -278,74 +280,6 @@ export default function StoreCreateSale() {
   const [showAddVillageModal, setShowAddVillageModal] = useState(false);
   const [newVillageNameInput, setNewVillageNameInput] = useState("");
   const [creatingVillage, setCreatingVillage] = useState(false);
-
-  // Dummy customer data - Replace with actual API call later
-  const dummyCustomers = [
-    {
-      id: 1,
-      name: "Kaushik Patel",
-      mobile: "9876543210",
-      village: "Gandhinagar",
-      area: "Sector 5",
-      city: "Gandhinagar",
-    },
-    {
-      id: 2,
-      name: "Kaushik Sharma",
-      mobile: "9876543211",
-      village: "Ahmedabad",
-      area: "Navrangpura",
-      city: "Ahmedabad",
-    },
-    {
-      id: 3,
-      name: "Rajesh Kumar",
-      mobile: "9876543212",
-      village: "Surat",
-      area: "Adajan",
-      city: "Surat",
-    },
-    {
-      id: 4,
-      name: "Priya Mehta",
-      mobile: "9876543213",
-      village: "Vadodara",
-      area: "Makarpura",
-      city: "Vadodara",
-    },
-    {
-      id: 5,
-      name: "Amit Singh",
-      mobile: "9876543214",
-      village: "Rajkot",
-      area: "University Road",
-      city: "Rajkot",
-    },
-    {
-      id: 6,
-      name: "Sneha Patel",
-      mobile: "9876543215",
-      village: "Bhavnagar",
-      area: "Talaja",
-      city: "Bhavnagar",
-    },
-    {
-      id: 7,
-      name: "Vikram Desai",
-      mobile: "9876543216",
-      village: "Anand",
-      area: "Vidyanagar",
-      city: "Anand",
-    },
-    {
-      id: 8,
-      name: "Pooja Shah",
-      mobile: "9876543217",
-      village: "Mehsana",
-      area: "Modhera",
-      city: "Mehsana",
-    },
-  ];
   const [generatedOrderId] = useState(
     () => `STORE-${Date.now().toString().slice(-6)}`,
   );
@@ -1494,6 +1428,7 @@ export default function StoreCreateSale() {
       (invoiceDeltaDirection === "collect" &&
         ["collect_later", "manager_adjustment"].includes(editSettlementMode)));
   const submitBlockedReason = (() => {
+    if (isCreationDisabled) return disabledMessage;
     if (submitting || !reviewData) return "Review data is not ready yet.";
     if (cartItemsCount <= 0) return "Add at least one product.";
     if (hasInvoiceDelta && !editSettlementAcknowledged) {
@@ -2897,6 +2832,7 @@ export default function StoreCreateSale() {
           )}
         </div>
       )}
+      <LicenseCreationBanner actionName="store sales" />
       {!singleStepCheckout && (
         <StepIndicator step={step} steps={steps} isMobile={isMobile} />
       )}

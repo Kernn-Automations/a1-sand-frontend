@@ -33,15 +33,7 @@ import {
   FaArrowDown,
 } from "react-icons/fa";
 
-// Default materials list for Anjali Constructions if database returns empty
-const DEFAULT_CONSTRUCTION_MATERIALS = [
-  { id: 1, name: "20mm Metal Aggregates", category: "Stone Crushers", unit: "Brass", stock: "45.00", minStock: "10.00", avgRate: "₹3,800/Brass" },
-  { id: 2, name: "40mm Metal Aggregates", category: "Stone Crushers", unit: "Brass", stock: "32.50", minStock: "10.00", avgRate: "₹3,400/Brass" },
-  { id: 3, name: "River Sand (Plastering)", category: "River Sand", unit: "Brass", stock: "28.00", minStock: "8.00", avgRate: "₹5,200/Brass" },
-  { id: 4, name: "River Sand (Brick Work / Slab)", category: "River Sand", unit: "Brass", stock: "55.00", minStock: "12.00", avgRate: "₹4,800/Brass" },
-  { id: 5, name: "Robo Sand / M-Sand", category: "Manufactured Sand", unit: "Brass", stock: "60.00", minStock: "15.00", avgRate: "₹2,900/Brass" },
-  { id: 6, name: "Red Clay Bricks", category: "Clay Bricks", unit: "Units", stock: "24,000", minStock: "5,000", avgRate: "₹9.50/Brick" },
-];
+
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -154,16 +146,16 @@ export default function HomePage() {
     };
   }, [financeData, recentOrders]);
 
-  // Mock Trend Chart Data (daily distribution based on current metrics)
+  // Daily distribution based on current metrics (falls back to 0 if no transactions)
   const chartData = useMemo(() => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Today"];
-    const baseRev = kpis.revenue > 0 ? kpis.revenue / 7 : 14000;
-    const baseCost = kpis.purchaseCost > 0 ? kpis.purchaseCost / 7 : 9500;
+    const baseRev = kpis.revenue > 0 ? kpis.revenue / 7 : 0;
+    const baseCost = kpis.purchaseCost > 0 ? kpis.purchaseCost / 7 : 0;
 
     return days.map((day, idx) => ({
       day,
-      Revenue: Math.round(baseRev * (0.7 + (idx * 0.1))),
-      Cost: Math.round(baseCost * (0.65 + (idx * 0.08))),
+      Revenue: baseRev > 0 ? Math.round(baseRev * (0.7 + idx * 0.1)) : 0,
+      Cost: baseCost > 0 ? Math.round(baseCost * (0.65 + idx * 0.08)) : 0,
     }));
   }, [kpis]);
 
@@ -440,96 +432,116 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            gap: 14,
-          }}
-        >
-          {(products.length > 0 ? products.slice(0, 6) : DEFAULT_CONSTRUCTION_MATERIALS).map((mat, idx) => {
-            const matName = typeof mat.name === "object" ? (mat.name?.name || "Material") : (mat.name || "Material");
-            const isBrick = typeof matName === "string" && matName.toLowerCase().includes("brick");
-            const categoryName = typeof mat.category === "object" ? (mat.category?.name || "Construction Aggregate") : (mat.category || "Construction Aggregate");
-            const unitName = typeof mat.unit === "object" ? (mat.unit?.name || (isBrick ? "Bricks" : "Brass")) : (mat.unit || (isBrick ? "Bricks" : "Brass"));
-            return (
-              <div
-                key={mat.id || idx}
-                style={{
-                  background: "#ffffff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 12,
-                  padding: "16px 18px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        background: "#f1f5f9",
-                        color: "#475569",
-                        padding: "2px 8px",
-                        borderRadius: 6,
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {categoryName}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "11.5px",
-                        fontWeight: 700,
-                        color: "#16a34a",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a" }}></span>
-                      Available
-                    </span>
-                  </div>
-
-                  <div style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>
-                    {matName}
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                    <span style={{ fontSize: "22px", fontWeight: 800, color: "#ea580c" }}>
-                      {typeof mat.stock === "object" ? (mat.stock?.quantity || "Available") : (mat.stock || (mat.current_stock ? parseFloat(mat.current_stock).toFixed(2) : "Available"))}
-                    </span>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#64748b" }}>
-                      {unitName}
-                    </span>
-                  </div>
-                </div>
-
+        {products && products.length > 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: 14,
+            }}
+          >
+            {products.slice(0, 6).map((mat, idx) => {
+              const matName = typeof mat.name === "object" ? (mat.name?.name || "Material") : (mat.name || "Material");
+              const isBrick = typeof matName === "string" && matName.toLowerCase().includes("brick");
+              const categoryName = typeof mat.category === "object" ? (mat.category?.name || "Construction Aggregate") : (mat.category || "Construction Aggregate");
+              const unitName = typeof mat.unit === "object" ? (mat.unit?.name || (isBrick ? "Bricks" : "Brass")) : (mat.unit || (isBrick ? "Bricks" : "Brass"));
+              return (
                 <div
+                  key={mat.id || idx}
                   style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 12,
+                    padding: "16px 18px",
                     display: "flex",
+                    flexDirection: "column",
                     justifyContent: "space-between",
-                    alignItems: "center",
-                    marginTop: 14,
-                    paddingTop: 10,
-                    borderTop: "1px solid #f1f5f9",
-                    fontSize: "12px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
                   }}
                 >
-                  <span style={{ color: "#64748b" }}>Market Selling Rate</span>
-                  <span style={{ fontWeight: 700, color: "#0f172a" }}>
-                    {mat.avgRate || (mat.price ? `₹${parseFloat(mat.price).toLocaleString("en-IN")}/${unitName}` : "Standard Rate")}
-                  </span>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          background: "#f1f5f9",
+                          color: "#475569",
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {categoryName}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "11.5px",
+                          fontWeight: 700,
+                          color: "#16a34a",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#16a34a" }}></span>
+                        Available
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: "15px", fontWeight: 700, color: "#0f172a", marginBottom: 6 }}>
+                      {matName}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                      <span style={{ fontSize: "22px", fontWeight: 800, color: "#ea580c" }}>
+                        {typeof mat.stock === "object" ? (mat.stock?.quantity || "0.00") : (mat.stock || (mat.current_stock ? parseFloat(mat.current_stock).toFixed(2) : "0.00"))}
+                      </span>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: "#64748b" }}>
+                        {unitName}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginTop: 14,
+                      paddingTop: 10,
+                      borderTop: "1px solid #f1f5f9",
+                      fontSize: "12px",
+                    }}
+                  >
+                    <span style={{ color: "#64748b" }}>Selling Rate</span>
+                    <span style={{ fontWeight: 700, color: "#0f172a" }}>
+                      {mat.avgRate || (mat.price ? `₹${parseFloat(mat.price).toLocaleString("en-IN")}/${unitName}` : "N/A")}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            style={{
+              padding: "36px 20px",
+              textAlign: "center",
+              background: "#ffffff",
+              borderRadius: 12,
+              border: "1px dashed #cbd5e1",
+            }}
+          >
+            <FaBoxes size={32} style={{ color: "#94a3b8", margin: "0 auto 10px" }} />
+            <div style={{ fontSize: "15px", fontWeight: 700, color: "#334155" }}>
+              No Physical Materials In Stock Yet
+            </div>
+            <div style={{ fontSize: "13px", color: "#64748b", marginTop: 4 }}>
+              Add products and inward deliveries to monitor live stocks and rates.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Two Column Operational Section: Dispatches & Top Contractors ──── */}

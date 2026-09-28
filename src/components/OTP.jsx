@@ -239,6 +239,7 @@ function OTP({
           }
         }
 
+        sessionStorage.removeItem("license_modal_dismissed");
         localStorage.setItem("user", JSON.stringify(userPayload));
 
         if (setRole) setRole(userPayload.roles);

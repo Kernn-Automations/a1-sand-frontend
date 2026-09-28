@@ -58,6 +58,7 @@ function DashHeader({
 
   const navLinks = [
     { label: "Dashboard Home", path: "/", icon: <FaHome /> },
+    { label: "Sales Orders & Quotations", path: "/sales", icon: <FaFileInvoiceDollar /> },
     { label: "Customers & Contractors", path: "/customers", icon: <FaUsers /> },
     { label: "Staff & Employees", path: "/employees", icon: <FaUserTie /> },
     { label: "Products Master", path: "/products", icon: <FaBoxes /> },

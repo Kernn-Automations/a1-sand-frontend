@@ -8,24 +8,18 @@ import {
   FaMinus
 } from "react-icons/fa";
 
-function ProductBarchart({ topPerformingBOs }) {
+function ProductBarchart({ monthlyRevenue = [], productPerformance = [] }) {
   const canvasRef = useRef(null);
   const [chartType, setChartType] = React.useState('bar');
 
-  // Mock data for demonstration - replace with actual data
-  const mockData = {
-    salesTrend: [12, 19, 3, 5, 2, 3, 15, 8, 12, 15, 18, 22],
-    productPerformance: [
-      { name: 'Curd', value: 120, color: '#3B82F6' },
-      { name: 'Butter', value: 280, color: '#F59E0B' },
-      { name: 'Milk Powder', value: 150, color: '#10B981' },
-      { name: 'Ghee', value: 80, color: '#8B5CF6' },
-      { name: 'Butter Milk', value: 200, color: '#06B6D4' }
-    ],
-    monthlyRevenue: [45000, 52000, 48000, 61000, 58000, 72000, 68000, 75000, 82000, 78000, 85000, 92000]
-  };
-
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // Real data or graceful zeros
+  const revenueData = monthlyRevenue.length === 12 
+    ? monthlyRevenue 
+    : new Array(12).fill(0);
+
+  const performanceData = Array.isArray(productPerformance) ? productPerformance : [];
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -37,13 +31,13 @@ function ProductBarchart({ topPerformingBOs }) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     if (chartType === 'bar') {
-      drawBarChart(ctx, mockData.monthlyRevenue, months);
+      drawBarChart(ctx, revenueData, months);
     } else if (chartType === 'line') {
-      drawLineChart(ctx, mockData.monthlyRevenue, months);
+      drawLineChart(ctx, revenueData, months);
     } else if (chartType === 'pie') {
-      drawPieChart(ctx, mockData.productPerformance);
+      drawPieChart(ctx, performanceData);
     }
-  }, [chartType, topPerformingBOs]);
+  }, [chartType, revenueData, performanceData]);
 
   const drawBarChart = (ctx, data, labels) => {
     const canvas = ctx.canvas;
@@ -53,7 +47,7 @@ function ProductBarchart({ topPerformingBOs }) {
     const chartWidth = width - 2 * padding;
     const chartHeight = height - 2 * padding;
     
-    const maxValue = Math.max(...data);
+    const maxValue = Math.max(...data, 1000);
     const barWidth = chartWidth / data.length;
     
     // Draw grid lines
@@ -69,7 +63,7 @@ function ProductBarchart({ topPerformingBOs }) {
     
     // Draw bars
     data.forEach((value, index) => {
-      const barHeight = (value / maxValue) * chartHeight;
+      const barHeight = maxValue > 0 ? (value / maxValue) * chartHeight : 0;
       const x = padding + index * barWidth + barWidth * 0.1;
       const y = height - padding - barHeight;
       
@@ -81,15 +75,18 @@ function ProductBarchart({ topPerformingBOs }) {
       ctx.fillStyle = gradient;
       ctx.fillRect(x, y, barWidth * 0.8, barHeight);
       
-      // Draw value on top of bar
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px Poppins';
-      ctx.textAlign = 'center';
-      ctx.fillText(`₹${(value/1000).toFixed(0)}K`, x + barWidth * 0.4, y - 5);
+      // Draw value on top of bar if > 0
+      if (value > 0) {
+        ctx.fillStyle = '#374151';
+        ctx.font = '12px Poppins';
+        ctx.textAlign = 'center';
+        ctx.fillText(`₹${(value/1000).toFixed(0)}K`, x + barWidth * 0.4, y - 5);
+      }
       
       // Draw month label
       ctx.fillStyle = '#6B7280';
       ctx.font = '11px Poppins';
+      ctx.textAlign = 'center';
       ctx.fillText(labels[index], x + barWidth * 0.4, height - padding + 20);
     });
   };
@@ -102,7 +99,8 @@ function ProductBarchart({ topPerformingBOs }) {
     const chartWidth = width - 2 * padding;
     const chartHeight = height - 2 * padding;
     
-    const maxValue = Math.max(...data);
+    const maxValue = Math.max(...data, 1000);
+    const stepX = chartWidth / (data.length - 1);
     
     // Draw grid lines
     ctx.strokeStyle = '#E5E7EB';
@@ -121,8 +119,8 @@ function ProductBarchart({ topPerformingBOs }) {
     ctx.beginPath();
     
     data.forEach((value, index) => {
-      const x = padding + (index / (data.length - 1)) * chartWidth;
-      const y = height - padding - (value / maxValue) * chartHeight;
+      const x = padding + index * stepX;
+      const y = height - padding - (maxValue > 0 ? (value / maxValue) * chartHeight : 0);
       
       if (index === 0) {
         ctx.moveTo(x, y);
@@ -133,25 +131,21 @@ function ProductBarchart({ topPerformingBOs }) {
     
     ctx.stroke();
     
-    // Draw data points
+    // Draw points and labels
     data.forEach((value, index) => {
-      const x = padding + (index / (data.length - 1)) * chartWidth;
-      const y = height - padding - (value / maxValue) * chartHeight;
+      const x = padding + index * stepX;
+      const y = height - padding - (maxValue > 0 ? (value / maxValue) * chartHeight : 0);
       
-      ctx.fillStyle = '#3B82F6';
+      // Point
+      ctx.fillStyle = '#1D4ED8';
       ctx.beginPath();
-      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.arc(x, y, 5, 0, 2 * Math.PI);
       ctx.fill();
       
-      // Draw value
-      ctx.fillStyle = '#374151';
-      ctx.font = '12px Poppins';
-      ctx.textAlign = 'center';
-      ctx.fillText(`₹${(value/1000).toFixed(0)}K`, x, y - 10);
-      
-      // Draw month label
+      // Label
       ctx.fillStyle = '#6B7280';
       ctx.font = '11px Poppins';
+      ctx.textAlign = 'center';
       ctx.fillText(labels[index], x, height - padding + 20);
     });
   };
@@ -162,16 +156,24 @@ function ProductBarchart({ topPerformingBOs }) {
     const height = canvas.height;
     const centerX = width / 2;
     const centerY = height / 2;
-    const radius = Math.min(width, height) / 3;
+    const radius = Math.min(centerX, centerY) - 40;
     
     const total = data.reduce((sum, item) => sum + item.value, 0);
-    let currentAngle = -Math.PI / 2;
     
-    data.forEach((item, index) => {
+    if (total === 0 || data.length === 0) {
+      ctx.fillStyle = '#9CA3AF';
+      ctx.font = '14px Poppins';
+      ctx.textAlign = 'center';
+      ctx.fillText('No product data available', centerX, centerY);
+      return;
+    }
+
+    let currentAngle = 0;
+    
+    data.forEach(item => {
       const sliceAngle = (item.value / total) * 2 * Math.PI;
       
-      // Draw slice
-      ctx.fillStyle = item.color;
+      ctx.fillStyle = item.color || '#3B82F6';
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
@@ -194,9 +196,10 @@ function ProductBarchart({ topPerformingBOs }) {
   };
 
   const getGrowthRate = () => {
-    const data = mockData.monthlyRevenue;
-    const currentMonth = data[data.length - 1];
-    const previousMonth = data[data.length - 2];
+    if (revenueData.length < 2) return 0;
+    const currentMonth = revenueData[revenueData.length - 1] || 0;
+    const previousMonth = revenueData[revenueData.length - 2] || 0;
+    if (previousMonth === 0) return currentMonth > 0 ? 100 : 0;
     const growth = ((currentMonth - previousMonth) / previousMonth) * 100;
     return growth;
   };
@@ -241,28 +244,13 @@ function ProductBarchart({ topPerformingBOs }) {
         </div>
       </div>
       
-      <div className={styles.chartContainer}>
+      <div className={styles.canvasContainer}>
         <canvas 
           ref={canvasRef} 
           width={600} 
-          height={400}
+          height={300}
           className={styles.chartCanvas}
         />
-      </div>
-      
-      <div className={styles.chartLegend}>
-        <div className={styles.legendItem}>
-          <div className={styles.legendColor} style={{ backgroundColor: '#3B82F6' }}></div>
-          <span>Revenue</span>
-        </div>
-        <div className={styles.legendItem}>
-          <div className={styles.legendColor} style={{ backgroundColor: '#10B981' }}></div>
-          <span>Growth</span>
-        </div>
-        <div className={styles.legendItem}>
-          <div className={styles.legendColor} style={{ backgroundColor: '#F59E0B' }}></div>
-          <span>Target</span>
-        </div>
       </div>
     </div>
   );

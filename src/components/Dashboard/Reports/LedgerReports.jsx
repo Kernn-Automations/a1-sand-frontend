@@ -34,20 +34,7 @@ function LedgerReports({navigate}) {
         const result = await customerLedgerService.getCustomers(axiosAPI)
         
         if (result.success) {
-          const customersList = result.data || []
-          
-          // Add dummy customer for testing
-          const dummyCustomer = {
-            id: 'dummy-001',
-            name: 'DIGAMBAR SHANKAR SAWANT',
-            address: 'SNO 27 1/2, CHANRABHAGA NIVAS, GHATE COLONY, WAI SATARA MH',
-            aadhar: '924823386904',
-            location: '28.704100, 77.102500',
-            contact: '+91-8888000743',
-            email: '',
-            isDummy: true
-          }
-          setCustomers([dummyCustomer, ...customersList])
+          setCustomers(customersList)
         } else {
           setError(result.message || "Failed to fetch customers")
           setIsModalOpen(true)
@@ -96,30 +83,17 @@ function LedgerReports({navigate}) {
     setLoading(true)
 
     try {
-      let result
+      // Fetch real data from backend
+      const periodData = reportType === 'financial-year' 
+        ? financialYear 
+        : { fromDate, toDate }
 
-      if (selectedCustomer.id === 'dummy-001') {
-        // Use dummy data for testing
-        setLedgerData([
-          { date: '01 Apr 25', particulars: 'Opening Balance', vchType: '', vchNo: '', debit: '0.00', credit: '', balance: '0.00' },
-          { date: '18 Jun 25', particulars: 'Sales Of Cattle Feed', vchType: 'Sales', vchNo: 'INV-2025-26-00012', debit: '', credit: '29,150.00', balance: '29,150.00 Dr' },
-          { date: '', particulars: 'YES BANK LIMITED', vchType: 'Receipt', vchNo: '36', debit: '29,150.00', credit: '', balance: '' },
-          { date: '26 Jun 25', particulars: 'YES BANK LIMITED', vchType: 'Receipt', vchNo: '51', debit: '3,590.00', credit: '', balance: '3,590.00 Cr' },
-          { date: '', particulars: 'Sales Of Cattle Feed', vchType: 'Sales', vchNo: 'INV-2025-26-00024', debit: '', credit: '3,590.00', balance: '' },
-        ])
-        setInfoMessage('')
-      } else {
-        // Fetch real data from backend
-        const periodData = reportType === 'financial-year' 
-          ? financialYear 
-          : { fromDate, toDate }
-
-        result = await customerLedgerService.fetchCustomerLedger(
-          axiosAPI, 
-          selectedCustomer.customer_id || selectedCustomer.id, 
-          reportType, 
-          periodData
-        )
+      const result = await customerLedgerService.fetchCustomerLedger(
+        axiosAPI, 
+        selectedCustomer.customer_id || selectedCustomer.id, 
+        reportType, 
+        periodData
+      )
 
         if (result.success) {
           // Handle the new backend response structure
@@ -164,7 +138,6 @@ function LedgerReports({navigate}) {
           setIsModalOpen(true)
           setLedgerData([])
         }
-      }
     } catch (err) {
       setError('Failed to fetch ledger data')
       setIsModalOpen(true)

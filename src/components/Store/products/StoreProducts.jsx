@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Flex } from "@chakra-ui/react";
 import ReusableCard from "../../ReusableCard";
 import styles from "../../Dashboard/HomePage/HomePage.module.css";
+import storeService from "../../../services/storeService";
 import { FaBox, FaEdit, FaTag, FaSearch } from "react-icons/fa";
 
 export default function StoreProducts() {
@@ -137,10 +138,10 @@ export default function StoreProducts() {
 
       {/* Statistics Cards */}
       <Flex wrap="wrap" justify="space-between" px={2} style={{ marginBottom: '24px' }}>
-        <ReusableCard title="Catalog Size" value={mockProductsData.catalogSize.toString()} />
-        <ReusableCard title="Price Updates (30d)" value={mockProductsData.priceUpdates30d.toString()} color="purple.500" />
-        <ReusableCard title="Out of Stock" value={mockProductsData.outOfStock.toString()} color="red.500" />
-        <ReusableCard title="New Products" value={mockProductsData.newProducts.toString()} color="green.500" />
+        <ReusableCard title="Catalog Size" value={stats.catalogSize.toString()} />
+        <ReusableCard title="Price Updates (30d)" value={stats.priceUpdates30d.toString()} color="purple.500" />
+        <ReusableCard title="Out of Stock" value={stats.outOfStock.toString()} color="red.500" />
+        <ReusableCard title="New Products" value={stats.newProducts.toString()} color="green.500" />
       </Flex>
 
       {/* Search Bar */}

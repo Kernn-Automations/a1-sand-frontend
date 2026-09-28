@@ -28,6 +28,7 @@ function Login() {
 
   useEffect(() => {
     if (login) {
+      sessionStorage.removeItem("license_modal_dismissed");
       localStorage.setItem("activeView", "admin");
       localStorage.setItem(
         "selectedDivision",

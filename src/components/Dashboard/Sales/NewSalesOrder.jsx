@@ -7,6 +7,7 @@ import { useDivision } from "../../context/DivisionContext";
 import MapPicker from "./MapPicker";
 import customerStyles from "../Customers/Customer.module.css";
 import CustomSearchDropdown from "@/utils/CustomSearchDropDown";
+import { useLicense, LicenseCreationBanner } from "@/context/LicenseContext";
 
 
 
@@ -876,6 +877,7 @@ export default function SalesOrderWizard() {
   const navigate = useNavigate();
   const { axiosAPI } = useAuth();
   const { selectedDivision } = useDivision();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   
   // Sync division context to localStorage for API calls
   useEffect(() => {
@@ -3459,8 +3461,10 @@ export default function SalesOrderWizard() {
           </Button>
           <Button
             onClick={finalizeOrder}
-            disabled={reviewLoading}
+            disabled={reviewLoading || isCreationDisabled}
+            title={isCreationDisabled ? disabledMessage : undefined}
             variant="primary"
+            style={isCreationDisabled ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
           >
             Confirm & Continue to Payment →
           </Button>
@@ -3837,8 +3841,13 @@ export default function SalesOrderWizard() {
               e.stopPropagation();
               submitPayments();
             }}
-            disabled={paymentUploading}
-            style={{ minWidth: '200px', cursor: paymentUploading ? 'not-allowed' : 'pointer' }}
+            disabled={paymentUploading || isCreationDisabled}
+            title={isCreationDisabled ? disabledMessage : undefined}
+            style={{ 
+              minWidth: '200px', 
+              cursor: (paymentUploading || isCreationDisabled) ? 'not-allowed' : 'pointer',
+              opacity: isCreationDisabled ? 0.6 : 1 
+            }}
           >
             {paymentUploading ? 'Submitting...' : 'Submit Order'}
           </Button>
@@ -3858,6 +3867,7 @@ export default function SalesOrderWizard() {
           <i className="bi bi-chevron-right"></i> New Sales Order
         </p>
         <div style={styles.title} className="title">Create New Sales Order</div>
+        <LicenseCreationBanner actionName="sales orders" />
         <StepIndicator 
           step={step} 
           setStep={setStep} 

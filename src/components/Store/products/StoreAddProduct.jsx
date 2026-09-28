@@ -4,9 +4,11 @@ import { useAuth } from "@/Auth";
 import ErrorModal from "@/components/ErrorModal";
 import Loading from "@/components/Loading";
 import { FaPlus, FaTimes } from "react-icons/fa";
+import { useLicense, LicenseCreationBanner } from "../../../context/LicenseContext";
 
 export default function StoreAddProduct({ navigate }) {
   const { axiosAPI } = useAuth();
+  const { isCreationDisabled, disabledMessage } = useLicense();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -185,6 +187,8 @@ export default function StoreAddProduct({ navigate }) {
           margin: 0
         }}>Create a new product in your catalog</p>
       </div>
+
+      <LicenseCreationBanner actionName="products" />
 
       {/* Form */}
       <div style={{ maxWidth: '800px' }}>
@@ -369,8 +373,13 @@ export default function StoreAddProduct({ navigate }) {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={loading}
-                style={{ fontFamily: 'Poppins' }}
+                disabled={loading || isCreationDisabled}
+                title={isCreationDisabled ? disabledMessage : undefined}
+                style={{ 
+                  fontFamily: 'Poppins',
+                  opacity: (loading || isCreationDisabled) ? 0.6 : 1,
+                  cursor: (loading || isCreationDisabled) ? 'not-allowed' : 'pointer',
+                }}
               >
                 {loading ? 'Adding...' : 'Add Product'}
               </button>
