@@ -1,125 +1,337 @@
-/* Base Styles */
-.cont {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justifyContent: center;
-  align-items: center;
-  padding: 0;
-}
+/* ==========================================================================
+   Modern SaaS Authentication Layout (Dual-Pane Desktop + Responsive Mobile)
+   ========================================================================== */
 
-.logincontainer {
+.pageWrapper {
+  min-height: 100vh;
   width: 100%;
   display: flex;
+  background-color: #f8fafc;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Left Showcase Panel (Desktop Only >= 1024px)
+   -------------------------------------------------------------------------- */
+.showcasePanel {
+  display: none;
+  flex: 1.15;
+  background: radial-gradient(circle at 15% 15%, rgba(234, 88, 12, 0.25) 0%, transparent 45%),
+              radial-gradient(circle at 85% 85%, rgba(249, 115, 22, 0.15) 0%, transparent 45%),
+              linear-gradient(145deg, #090d16 0%, #0f172a 45%, #1e293b 100%);
+  padding: 56px 52px;
+  position: relative;
   flex-direction: column;
-  justifyContent: space-between;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .showcasePanel {
+    display: flex;
+  }
+}
+
+.showcaseGlow {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 540px;
+  height: 540px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(50px);
+}
+
+.showcaseHeader {
+  position: relative;
+  z-index: 2;
+}
+
+.brandBadge {
+  display: inline-flex;
   align-items: center;
-  padding: 10px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  color: #fed7aa;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-bottom: 24px;
 }
 
-.formWrapper {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
+.showcaseTitle {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+  letter-spacing: -0.6px;
+  margin: 0 0 16px 0;
 }
 
-.inputContainer {
-  width: 100%;
+.showcaseTitle span {
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.showcaseDesc {
+  font-size: 15px;
+  color: #94a3b8;
+  line-height: 1.65;
+  max-width: 500px;
+  margin: 0;
+}
+
+.featuresGrid {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  margin: 40px 0;
+}
+
+.featureCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 18px 22px;
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(234, 88, 12, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.featureIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(234, 88, 12, 0.16);
+  border: 1px solid rgba(234, 88, 12, 0.35);
+  display: flex;
   align-items: center;
+  justify-content: center;
+  color: #fb923c;
+  flex-shrink: 0;
 }
 
-/* Logo Styles */
-.logo {
-  max-width: 370px !important;
-  min-width: 100px !important;
-  max-height: 130px;
-  margin: 20px 20px 20px 0;
+.featureText h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 5px 0;
 }
 
-.logocol, .logoHeader {
-  max-width: 370px !important;
-  min-width: 100px !important;
+.featureText p {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.showcaseFooter {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Right Form Panel (Full Height & Centered)
+   -------------------------------------------------------------------------- */
+.formPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 36px 24px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .formPanel {
+    padding: 48px 48px;
+    background-color: #f8fafc;
+  }
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 440px;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header & Brand Logo */
+.headerLogoWrapper {
   display: flex;
   justify-content: center;
-  width: 100%;
-}
-
-/* Heading Styles */
-.wel h1 {
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: 0.015em;
-  text-align: center;
-  color: var(--primary-color, #ea580c);
   margin-bottom: 24px;
 }
 
-/* Input Styles */
-.input {
-  display: block;
-  border: none;
-  border-bottom: 2px solid #292929;
+.headerLogo {
+  max-height: 64px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.06));
+}
+
+/* Auth Card Wrapper */
+.authCard {
   width: 100%;
-  max-width: 350px;
-  height: 40px;
-  font-size: 20px;
-  letter-spacing: 2px;
-  margin-bottom: 24px;
-  background-color: transparent;
-  font-weight: 600;
-  color: var(--secondary-color, #1e293b);
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+  padding: 38px 34px;
   box-sizing: border-box;
 }
 
-.input:focus {
-  border: none;
-  outline: none;
-  border-bottom: 2.5px solid var(--primary-color, #ea580c);
+@media (max-width: 640px) {
+  .authCard {
+    padding: 28px 20px;
+    border-radius: 18px;
+    box-shadow: none;
+    border: none;
+    background: transparent;
+  }
+  .formPanel {
+    padding: 24px 16px;
+    background-color: #ffffff;
+  }
 }
 
-/* Button Styles */
-.sendbutton, .verifybutton {
-  width: 100%;
-  max-width: 300px;
-  height: 44px;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  background-color: var(--primary-color, #ea580c);
-  font-size: 16px;
+/* Headings */
+.titleArea {
+  margin-bottom: 26px;
+  text-align: center;
+}
+
+.welcomeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
   font-weight: 700;
-  cursor: pointer;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+
+.mainTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  margin: 0 0 6px 0;
+}
+
+.subTitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Input Fields */
+.inputGroup {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.phoneInputWrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin: 0 auto;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  background-color: #ffffff;
+  overflow: hidden;
   transition: all 0.2s ease;
 }
 
-.sendbutton:hover, .verifybutton:hover {
-  background-color: var(--primary-hover, #c2410c);
+.phoneInputWrapper:focus-within {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.14);
 }
 
-.sendbutton:active, .verifybutton:active {
-  background-color: var(--primary-active, #9a3412);
+.countryCode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 13px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  background-color: #f8fafc;
+  border-right: 1.5px solid #e2e8f0;
+  user-select: none;
 }
 
-.sendbutton:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.passkeybutton {
+.phoneInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 13px 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+  background: transparent;
   width: 100%;
-  max-width: 300px;
-  height: 44px;
-  border-radius: 8px;
-  border: 1.5px solid var(--primary-color, #ea580c);
-  color: var(--primary-color, #ea580c);
-  background-color: #ffffff;
+}
+
+.phoneInput::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  letter-spacing: normal;
+  font-size: 14px;
+}
+
+/* Primary Button (Send OTP / Verify OTP) */
+.primaryButton {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -127,26 +339,35 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin: 0 auto;
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.32);
   transition: all 0.2s ease;
+  min-height: 50px;
+  user-select: none;
 }
 
-.passkeybutton:hover {
-  background-color: #fff7ed;
-  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15);
+.primaryButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c2410c 0%, #ea580c 100%);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.42);
+  transform: translateY(-1px);
 }
 
-.passkeybutton:disabled {
+.primaryButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primaryButton:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+/* Clean OR Divider */
 .orDivider {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 300px;
-  margin: 16px auto;
+  margin: 20px 0;
   color: #94a3b8;
 }
 
@@ -159,163 +380,231 @@
 }
 
 .orDivider span {
-  padding: 0 12px;
-  font-size: 12px;
+  padding: 0 14px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
 }
 
-.loadingdiv {
-  margin: 20px auto;
-  display: flex;
-  justify-content: center;
-}
-
-.error {
-  font-size: 15px;
-  font-weight: 500;
-  text-align: center;
-  color: #ef4444;
-  margin: 10px 0;
-}
-
-.success {
-  font-size: 15px;
-  font-weight: 500;
-  text-align: center;
-  color: var(--secondary-color, #1e293b);
-  margin: 10px 0;
-}
-
-.p {
-  font-size: 20px;
-  font-weight: 500;
-  text-align: center;
-  color: var(--secondary-color, #1e293b);
-  margin-bottom: 20px;
-}
-
-.label {
-  font-size: 16px;
-  font-weight: 500;
-  text-align: left;
-  display: block;
-  margin-bottom: 6px;
-  color: #334155;
-}
-
-/* OTP Styles */
-.otps {
-  display: flex;
-  justify-content: center;
-  font-size: 20px;
-  margin: 15px 0;
-}
-
-.otps input {
-  width: 40px !important;
-  height: 48px;
-  margin: 0 6px;
+/* Passkey Button */
+.passkeyButton {
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 12px;
   border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 22px;
   background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14.5px;
   font-weight: 700;
-  color: var(--secondary-color, #1e293b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  user-select: none;
 }
 
-.otps input:focus {
-  outline: none;
-  border-color: var(--primary-color, #ea580c);
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+.passkeyButton:hover:not(:disabled) {
+  background-color: #fff7ed;
+  border-color: #ea580c;
+  color: #ea580c;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.12);
 }
 
-.otplabel {
-  font-size: 16px;
-  font-weight: 500;
-  text-align: left;
-  margin: 10px 0;
+.passkeyButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.resend {
-  margin: 16px 0;
+/* Security Guarantee Badge */
+.securityNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 24px;
   text-align: center;
-  color: var(--primary-color, #ea580c);
+}
+
+/* --------------------------------------------------------------------------
+   OTP Verification View
+   -------------------------------------------------------------------------- */
+.otpWrapper {
+  width: 100%;
+}
+
+.otpTargetBox {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.otpTargetPhone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.changePhoneBtn {
+  background: none;
+  border: none;
+  color: #ea580c;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.changePhoneBtn:hover {
+  background-color: #fff7ed;
+  text-decoration: underline;
+}
+
+.otpBoxesContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 22px;
+}
+
+.otpBoxesContainer > div {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.otpInputBox {
+  width: 46px !important;
+  height: 54px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  color: #0f172a;
+  outline: none;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  caret-color: #ea580c;
+}
+
+.otpInputBox:focus {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+  background-color: #ffffff;
+}
+
+.otpErrorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 10px;
+  padding: 10px 14px;
   font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  text-align: center;
+}
+
+.resendRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.resendLink {
+  color: #ea580c;
+  font-weight: 700;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.resendLink:hover {
+  text-decoration: underline;
+}
+
+.resendCountdown {
+  color: #94a3b8;
   font-weight: 600;
 }
 
-.resend a {
-  color: var(--primary-color, #ea580c);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* Footer Styles */
-.footer {
+/* Conflict Message Banner */
+.conflictBanner {
   width: 100%;
-  position: sticky;
-  bottom: 0;
-}
-
-.footcontainer {
-  width: 100%;
-  padding: 10px 0;
-  text-align: center;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
   font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  font-weight: 500;
 }
 
-/* Media Queries */
-@media (max-width: 768px) {
-  .cont {
-    height: 100vh;
-    padding: 0;
-    justify-content: center;
-    overflow-y: auto;
-  }
+/* SMS Notice Banner */
+.smsNoticeBanner {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: #c2410c;
+  line-height: 1.45;
+  text-align: left;
+}
 
-  .logincontainer {
-    width: 100%;
-    padding: 20px 15px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+/* Spinning Animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
-
-  .formWrapper {
-    max-width: 100%;
-    width: 100%;
-    margin: 0;
-    padding: 0 10px;
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  .inputContainer {
-    width: 100%;
-    padding: 0;
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive adjustment for narrow devices */
+@media (max-width: 420px) {
+  .otpBoxesContainer > div {
+    gap: 6px;
   }
-
-  .wel h1 {
-    font-size: 32px;
-    margin-bottom: 20px;
-  }
-
-  .p {
-    font-size: 18px;
-  }
-
-  .otps input {
-    width: 42px !important;
+  .otpInputBox {
+    width: 40px !important;
     height: 48px;
     font-size: 20px;
-  }
-
-  .sendbutton, .verifybutton, .passkeybutton {
-    width: 100%;
-    max-width: 100%;
-    height: 48px;
-    font-size: 16px;
+    border-radius: 10px;
   }
 }

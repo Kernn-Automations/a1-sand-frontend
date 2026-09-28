@@ -2,17 +2,52 @@ import { useState } from "react";
 import styles from "./Login.module.css";
 import axios from "axios";
 import OTP from "./OTP";
-import Loading from "./Loading";
 import ErrorModal from "./ErrorModal";
 import { useAuth } from "../Auth";
-import { Fingerprint } from "lucide-react";
+import {
+  Fingerprint,
+  Smartphone,
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+  KeyRound,
+  Loader2,
+} from "lucide-react";
 import { loginWithPasskey, isPasskeySupported } from "../services/passkeyService";
+
+const persistActiveStore = (storeInfo, fallbackId) => {
+  if (!storeInfo && !fallbackId) {
+    localStorage.removeItem("activeStore");
+    return;
+  }
+
+  const resolvedId =
+    storeInfo?.id ||
+    storeInfo?.storeId ||
+    storeInfo?.store_id ||
+    storeInfo?.assignedStoreId ||
+    fallbackId ||
+    null;
+
+  if (!resolvedId) {
+    localStorage.removeItem("activeStore");
+    return;
+  }
+
+  const payload = {
+    id: resolvedId,
+    name: storeInfo?.name || storeInfo?.storeName || storeInfo?.title || "",
+    code: storeInfo?.storeCode || storeInfo?.code || "",
+    type: storeInfo?.storeType || storeInfo?.type || "",
+  };
+
+  localStorage.setItem("activeStore", JSON.stringify(payload));
+};
 
 function Input({ setLogin, setUser, setRole }) {
   const { saveTokens } = useAuth();
   const [mobile, setMobile] = useState("");
   const [ontap, setOntap] = useState(false);
-  const [res, setRes] = useState();
   const [resp, setResp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
@@ -38,8 +73,6 @@ function Input({ setLogin, setUser, setRole }) {
       return;
     }
 
-    setOntap(true);
-    setResp(true);
     setLoading(true);
     setSmsNotice("");
 
@@ -64,30 +97,30 @@ function Input({ setLogin, setUser, setRole }) {
         }
       );
 
-      setRes(response.data);
       if (response.status === 200) {
-        setLoading(false);
+        setOntap(true);
         setResp(true);
         if (response.data?.smsDisabled) {
           setSmsNotice(response.data.message);
         }
       } else {
-        setResp(false);
         setOntap(false);
+        setResp(false);
       }
     } catch (e) {
       setOntap(false);
-      setError(e.response?.data?.message || "Server error");
+      setResp(false);
+      setError(e.response?.data?.message || "Failed to send OTP. Please check server.");
       setIsModalOpen(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔑 Instant Passkey Login (WebAuthn / Biometrics)
+  // Instant FIDO2 Biometric Passkey Login
   const onPasskeySubmit = async () => {
     if (!isPasskeySupported()) {
-      setError("Passkeys are not supported on this browser. Please use Mobile OTP.");
+      setError("Biometric Passkeys are not supported on this browser. Please use Mobile OTP.");
       setIsModalOpen(true);
       return;
     }
@@ -115,36 +148,90 @@ function Input({ setLogin, setUser, setRole }) {
             },
           });
 
-          const profileData =
-            profileResponse.data?.data || profileResponse.data;
+          const profileData = profileResponse.data?.data || profileResponse.data;
           if (profileData && typeof profileData === "object") {
             const normalizedProfile = profileData.user || profileData;
             const resolvedStore =
               normalizedProfile.store ||
               normalizedProfile.storeDetails ||
+              normalizedProfile.assignedStore ||
+              normalizedProfile.employeeStore ||
               profileData.defaultStore ||
-              (Array.isArray(normalizedProfile.stores)
-                ? normalizedProfile.stores[0]
-                : null);
+              (Array.isArray(normalizedProfile.stores) ? normalizedProfile.stores[0] : null);
 
             const resolvedStoreId =
               normalizedProfile.storeId ||
               normalizedProfile.store_id ||
-              resolvedStore?.id;
+              normalizedProfile.assignedStoreId ||
+              resolvedStore?.id ||
+              resolvedStore?.storeId ||
+              resolvedStore?.store_id;
+
+            const requiresStoreSelection =
+              profileData.requiresStoreSelection === true ||
+              profileData.storeSelectionRequired === true;
+            const assignedStores = profileData.assignedStores || [];
+            const defaultStore = profileData.defaultStore;
 
             userPayload = {
               ...userPayload,
               ...normalizedProfile,
               roles: normalizedProfile.roles || userPayload.roles,
               showDivisions: false,
-              store: resolvedStore || userPayload.store,
+              userDivision: normalizedProfile.userDivision || userPayload.userDivision,
+              store: resolvedStore || normalizedProfile.store || userPayload.store,
               storeId: resolvedStoreId || userPayload.storeId,
+              requiresStoreSelection,
+              assignedStores,
+              defaultStore,
               isStoreManager: profileData.isStoreManager || false,
               isStoreEmployee: profileData.isStoreEmployee || false,
             };
+
+            localStorage.setItem(
+              "authMeData",
+              JSON.stringify({
+                requiresStoreSelection,
+                assignedStores,
+                defaultStore,
+                isStoreManager: profileData.isStoreManager || false,
+              })
+            );
+
+            if (resolvedStore || resolvedStoreId) {
+              const finalStoreId = resolvedStoreId;
+              persistActiveStore(resolvedStore || userPayload.store, finalStoreId);
+
+              if (finalStoreId) {
+                localStorage.setItem("currentStoreId", finalStoreId.toString());
+                localStorage.setItem(
+                  "selectedStore",
+                  JSON.stringify({
+                    id: finalStoreId,
+                    name: resolvedStore?.name || userPayload.store?.name || "",
+                    storeCode:
+                      resolvedStore?.storeCode ||
+                      resolvedStore?.code ||
+                      userPayload.store?.storeCode ||
+                      userPayload.store?.code ||
+                      "",
+                  })
+                );
+              }
+            } else if (userPayload.storeId) {
+              persistActiveStore(userPayload.store, userPayload.storeId);
+              localStorage.setItem("currentStoreId", userPayload.storeId.toString());
+            } else {
+              persistActiveStore(null, null);
+            }
           }
         } catch (profileErr) {
           console.warn("Could not fetch profile details:", profileErr);
+          if (userPayload.store || userPayload.storeId) {
+            persistActiveStore(userPayload.store, userPayload.storeId);
+          } else {
+            persistActiveStore(null, null);
+          }
         }
 
         const userId = userPayload.id || userPayload.employeeId;
@@ -154,7 +241,11 @@ function Input({ setLogin, setUser, setRole }) {
 
         localStorage.setItem("user", JSON.stringify(userPayload));
         if (setRole) setRole(userPayload.roles);
-        setUser(userPayload);
+        setUser({
+          accesstoken: response.accessToken,
+          refresh: response.refreshToken,
+          user: userPayload,
+        });
         setLogin(true);
       } else {
         setError("Passkey sign-in failed. Please try again or use Mobile OTP.");
@@ -177,119 +268,146 @@ function Input({ setLogin, setUser, setRole }) {
 
   return (
     <>
-      <div className={styles.inputbox}>
-        <div className={styles.wel}>
-          <h1>Welcome!</h1>
-        </div>
+      {!ontap && (
+        <>
+          <div className={styles.titleArea}>
+            <div className={styles.welcomeBadge}>
+              <Sparkles size={13} />
+              <span>SECURE ACCESS</span>
+            </div>
+            <h2 className={styles.mainTitle}>Sign In to ACM</h2>
+            <p className={styles.subTitle}>
+              Enter your registered mobile number or use your biometric passkey
+            </p>
+          </div>
 
-        <div className={styles.inputContainer}>
           <form onSubmit={onSubmit}>
-            <p className={styles.p}>Login to continue</p>
-            <label className={styles.label}>Mobile number</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]{10}"
-              maxLength={10}
-              onChange={onChange}
-              value={mobile}
-              className={styles.input}
-              placeholder="10-digit mobile"
-              required
-            />
-
-            {!ontap && (
-              <>
-                <button
-                  type="submit"
-                  disabled={loading || passkeyLoading}
-                  className={styles.sendbutton}
-                >
-                  {loading ? "Sending OTP..." : "Send OTP"}
-                </button>
-
-                <div className={styles.orDivider}>
-                  <span>OR</span>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Registered Mobile Number</label>
+              <div className={styles.phoneInputWrapper}>
+                <div className={styles.countryCode}>
+                  <span>🇮🇳</span>
+                  <span>+91</span>
                 </div>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  onChange={onChange}
+                  value={mobile}
+                  className={styles.phoneInput}
+                  placeholder="10-digit mobile number"
+                  required
+                  autoFocus
+                />
+              </div>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={onPasskeySubmit}
-                  disabled={loading || passkeyLoading}
-                  className={styles.passkeybutton}
-                >
-                  <Fingerprint size={18} />
-                  <span>{passkeyLoading ? "Verifying..." : "Sign in with Passkey"}</span>
-                </button>
-              </>
-            )}
+            <button
+              type="submit"
+              disabled={loading || passkeyLoading || mobile.length !== 10}
+              className={styles.primaryButton}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className={styles.spinner} size={18} />
+                  <span>Sending OTP...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send OTP</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onPasskeySubmit}
+              disabled={loading || passkeyLoading}
+              className={styles.passkeyButton}
+            >
+              {passkeyLoading ? (
+                <>
+                  <Loader2 className={styles.spinner} size={18} color="#ea580c" />
+                  <span>Verifying Passkey...</span>
+                </>
+              ) : (
+                <>
+                  <Fingerprint size={20} color="#ea580c" />
+                  <span>Sign in with Passkey</span>
+                </>
+              )}
+            </button>
+
+            <div className={styles.securityNote}>
+              <ShieldCheck size={14} color="#16a34a" />
+              <span>End-to-end encrypted 256-bit authentication</span>
+            </div>
           </form>
+        </>
+      )}
 
-          {loading && (
-            <div className={styles.loadingdiv}>
-              <Loading />
+      {ontap && resp && (
+        <div className={styles.otpWrapper}>
+          <div className={styles.titleArea}>
+            <div className={styles.welcomeBadge}>
+              <KeyRound size={13} />
+              <span>SECURITY CODE</span>
+            </div>
+            <h2 className={styles.mainTitle}>Verify One-Time Password</h2>
+            <p className={styles.subTitle}>
+              Enter the 6-digit code sent to your mobile
+            </p>
+          </div>
+
+          <div className={styles.otpTargetBox}>
+            <div className={styles.otpTargetPhone}>
+              <Smartphone size={16} color="#ea580c" />
+              <span>+91 {mobile}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setOntap(false);
+                setResp(false);
+              }}
+              className={styles.changePhoneBtn}
+            >
+              Change
+            </button>
+          </div>
+
+          {smsNotice && (
+            <div className={styles.smsNoticeBanner}>
+              {smsNotice}
             </div>
           )}
 
-          {ontap && !loading && resp && (
-            <>
-              {smsNotice && (
-                <div
-                  style={{
-                    maxWidth: 350,
-                    margin: "0 auto 14px",
-                    padding: "10px 14px",
-                    backgroundColor: "#fff7ed",
-                    border: "1px solid #fed7aa",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    color: "#c2410c",
-                    textAlign: "center",
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {smsNotice}
-                </div>
-              )}
-              <div style={{ marginBottom: 12, textAlign: "center" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOntap(false);
-                    setResp(false);
-                  }}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "var(--primary-color, #ea580c)",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  &larr; Change mobile number
-                </button>
-              </div>
-              <OTP
-                email={mobile}
-                resendOtp={onSubmit}
-                setLogin={setLogin}
-                setUser={setUser}
-                setRole={setRole}
-              />
-            </>
-          )}
-        </div>
-
-        {isModalOpen && (
-          <ErrorModal
-            isOpen={isModalOpen}
-            message={error}
-            onClose={closeModal}
+          <OTP
+            email={mobile}
+            resendOtp={onSubmit}
+            setLogin={setLogin}
+            setUser={setUser}
+            setRole={setRole}
+            onPasskeyFallback={onPasskeySubmit}
+            passkeyLoading={passkeyLoading}
           />
-        )}
-      </div>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <ErrorModal
+          isOpen={isModalOpen}
+          message={error}
+          onClose={closeModal}
+        />
+      )}
     </>
   );
 }

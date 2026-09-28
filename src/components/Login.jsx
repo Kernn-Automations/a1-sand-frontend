@@ -4,6 +4,7 @@ import Footer from "./Footer";
 import Header from "./Header";
 import Input from "./Input";
 import styles from "./Login.module.css";
+import { Fingerprint, Truck, ShieldCheck, Sparkles, Layers } from "lucide-react";
 
 function Login() {
   const [login, setLogin] = useState(false);
@@ -37,32 +38,93 @@ function Login() {
   }, [login, navigate]);
 
   return (
-    <div className={styles.cont}>
-      {!login && (
-        <div className={styles.logincontainer}>
+    <div className={styles.pageWrapper}>
+      {/* Left Showcase Panel (Visible on Desktop >= 1024px) */}
+      <div className={styles.showcasePanel}>
+        <div className={styles.showcaseGlow} />
+
+        <div className={styles.showcaseHeader}>
+          <div className={styles.brandBadge}>
+            <Sparkles size={14} color="#fb923c" />
+            <span>ACM ENTERPRISE PORTAL</span>
+          </div>
+          <h1 className={styles.showcaseTitle}>
+            Next-Generation Operations &amp; <span>Materials Management</span>
+          </h1>
+          <p className={styles.showcaseDesc}>
+            Unified digital operations for dispatch, delivery challans, materials
+            tracking, and secure biometric authentication.
+          </p>
+        </div>
+
+        <div className={styles.featuresGrid}>
+          <div className={styles.featureCard}>
+            <div className={styles.featureIconBox}>
+              <Fingerprint size={22} />
+            </div>
+            <div className={styles.featureText}>
+              <h4>FIDO2 Biometric Passkeys</h4>
+              <p>
+                Sign in instantly using Touch ID, Face ID, or Windows Hello.
+                Fast, secure, and independent of SMS delays.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.featureCard}>
+            <div className={styles.featureIconBox}>
+              <Truck size={22} />
+            </div>
+            <div className={styles.featureText}>
+              <h4>Real-Time Materials &amp; Dispatch</h4>
+              <p>
+                Live monitoring of sand, aggregates, and automatic QR-code
+                authenticated delivery challans.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.featureCard}>
+            <div className={styles.featureIconBox}>
+              <Layers size={22} />
+            </div>
+            <div className={styles.featureText}>
+              <h4>Role-Based Workspaces</h4>
+              <p>
+                Instant synchronized access tailored for drivers, supervisors,
+                scale operators, and management.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.showcaseFooter}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <ShieldCheck size={16} color="#fb923c" />
+            <span>End-to-End Enterprise Encryption</span>
+          </div>
+          <span>v2.4 Production</span>
+        </div>
+      </div>
+
+      {/* Right Form Panel */}
+      <div className={styles.formPanel}>
+        <div className={styles.formContainer}>
           <Header />
+
           {sessionConflictMessage && (
-            <div
-              style={{
-                width: "100%",
-                marginBottom: 16,
-                padding: "12px 14px",
-                borderRadius: 12,
-                background: "#fef2f2",
-                border: "1px solid #fecaca",
-                color: "#991b1b",
-                fontSize: "13px",
-                lineHeight: 1.5,
-                textAlign: "center",
-              }}
-            >
+            <div className={styles.conflictBanner}>
               {sessionConflictMessage}
             </div>
           )}
-          <Input setLogin={setLogin} setUser={setUser} />
-          <Footer />
+
+          <div className={styles.authCard}>
+            <Input setLogin={setLogin} setUser={setUser} />
+          </div>
         </div>
-      )}
+
+        <Footer />
+      </div>
     </div>
   );
 }

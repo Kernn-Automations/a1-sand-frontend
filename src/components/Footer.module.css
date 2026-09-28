@@ -1,103 +1,66 @@
-/* General Footer Styling */
-.footer {
-  width: 100%;
-  bottom: 0;
-  padding: 40px 0 0 0;
-  text-align: center;
-  font-family: Arial, sans-serif;
-  color: #212529;
-}
-
 .footcontainer {
   width: 100%;
-  padding: 0 15px;
+  padding: 16px 0 8px;
   box-sizing: border-box;
 }
 
-/* Links Styling */
+.footer {
+  width: 100%;
+  text-align: center;
+  font-family: inherit;
+}
+
 .p1 {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.7;
-  margin-bottom: 0;
-}
-
-.pipe {
-  color: var(--primary-color);
-  font-weight: 600;
-  padding: 0 5px;
-}
-
-.pwd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.6;
-  color: #6c757d;
-  margin: 10px 0;
+  color: #64748b;
+  margin-bottom: 8px;
 }
 
-/* Footer Links Style */
-.nav-link {
-  color: #007bff;
+.p1 a {
+  color: #64748b;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
-.nav-link:hover {
+.p1 a:hover {
+  color: #ea580c;
   text-decoration: underline;
 }
 
-.footer hr {
-  width: 40%;
-  opacity: 0.5 !important;
-  margin: 5px auto;
-  border-color: var(--primary-color) !important;
-  border-top: 2px solid;
+.pipe {
+  color: #cbd5e1;
+  font-size: 11px;
 }
 
-.pwd span {
-  color: #a92426;
-  font-weight: 600;
+.divider {
+  width: 140px;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 6px auto;
+  border: none;
 }
 
-/* Media Queries for Responsiveness */
-@media (max-width: 768px) {
-  .footer {
-    font-size: 12px;
-    padding: 15px 0;
-  }
-
-  .p1 {
-    font-size: 13px;
-  }
-
-  .pwd {
-    font-size: 11px;
-  }
-
-  .footer hr {
-    width: 80%;
-  }
+.pwd {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin: 0;
 }
 
-@media (max-width: 480px) {
-  .footer {
-    font-size: 10px;
-    padding: 10px 0;
-  }
+.bnd a {
+  color: #0f172a;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.5px;
+}
 
-  .p1 {
-    font-size: 12px;
-  }
-
-  .pwd {
-    font-size: 10px;
-  }
-
-  .footer hr {
-    width: 90%;
-  }
-
-  .pipe {
-    font-size: 14px;
-  }
+.bnd a:hover {
+  color: #ea580c;
+  text-decoration: underline;
 }

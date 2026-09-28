@@ -1,18 +1,32 @@
-import React, { useState, useContext, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import OtpInput from "react-otp-input";
 import axios from "axios";
-import Loading from "./Loading";
 import ErrorModal from "./ErrorModal";
 import styles from "./Login.module.css";
 import { useAuth } from "../Auth";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Fingerprint,
+  Loader2,
+} from "lucide-react";
 
-function OTP({ email, resendOtp, setLogin, setUser }) {
+function OTP({
+  email,
+  resendOtp,
+  setLogin,
+  setUser,
+  setRole,
+  onPasskeyFallback,
+  passkeyLoading,
+}) {
   const { saveTokens } = useAuth();
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const VITE_API = import.meta.env.VITE_API_URL;
+  const [timer, setTimer] = useState(30);
+  const VITE_API = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
   const persistActiveStore = (storeInfo, fallbackId) => {
     if (!storeInfo && !fallbackId) {
@@ -43,46 +57,50 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
     localStorage.setItem("activeStore", JSON.stringify(payload));
   };
 
-  // Add ref for auto-focus functionality
   const otpInputRef = useRef(null);
 
-  // Auto-focus on the first OTP input when component mounts
+  // Auto-focus on first box
   useEffect(() => {
-    // Small delay to ensure the OTP input is fully rendered
-    const timer = setTimeout(() => {
-      // Try to find the first OTP input using the ref
+    const focusTimer = setTimeout(() => {
       if (otpInputRef.current) {
         const firstInput = otpInputRef.current.querySelector("input");
         if (firstInput) {
           firstInput.focus();
-          firstInput.select();
         }
       }
+    }, 150);
 
-      // Fallback: try multiple selectors to find the first OTP input
-      if (!otpInputRef.current) {
-        const firstInput =
-          document.querySelector(".otp-input input") ||
-          document.querySelector('[data-testid="otp-input"]') ||
-          document.querySelector('input[type="text"]');
-        if (firstInput) {
-          firstInput.focus();
-          firstInput.select();
-        }
-      }
-    }, 200);
-
-    return () => clearTimeout(timer);
+    return () => clearTimeout(focusTimer);
   }, []);
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // 30s Countdown timer for Resend OTP
+  useEffect(() => {
+    let interval = null;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
 
-    // Detect if running on mobile device
+  const handleResend = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (timer > 0) return;
+    setTimer(30);
+    setError("");
+    setOtp("");
+    resendOtp();
+  };
+
+  const executeVerify = async (otpCode) => {
+    if (loading) return;
+    setLoading(true);
+    setError("");
+
     const isMobileDevice =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent,
+        navigator.userAgent
       );
     const isMobileBrowser = window.innerWidth <= 768 || isMobileDevice;
 
@@ -91,23 +109,19 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
         `${VITE_API}/auth/verify`,
         {
           mobile: email,
-          otp,
-          allowMobile: true, // Explicitly allow mobile login
+          otp: otpCode,
+          allowMobile: true,
           deviceType: isMobileBrowser ? "mobile" : "web",
         },
         {
           headers: {
-            "X-Allow-Mobile": "true", // Header to indicate mobile access should be allowed
+            "X-Allow-Mobile": "true",
             "X-Device-Type": isMobileBrowser ? "mobile" : "web",
           },
-        },
+        }
       );
 
       if (res.status === 200) {
-        console.log("OTP.jsx - OTP verified successfully, storing tokens...");
-        console.log("OTP.jsx - Backend response data:", res.data);
-
-        // Store both tokens using Auth context
         saveTokens(res.data.accessToken, res.data.refreshToken);
 
         const baseUserData = res.data.data?.user || res.data.data || {};
@@ -117,8 +131,6 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
           showDivisions: res.data.showDivisions ?? baseUserData.showDivisions,
           userDivision: res.data.userDivision || baseUserData.userDivision,
         };
-        console.log("OTP.jsx - Created userPayload:", userPayload);
-        console.log("OTP.jsx - showDivisions flag:", userPayload.showDivisions);
 
         try {
           const profileResponse = await axios.get(`${VITE_API}/auth/me`, {
@@ -149,7 +161,6 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
               resolvedStore?.storeId ||
               resolvedStore?.store_id;
 
-            // Store requiresStoreSelection and assignedStores from /auth/me response
             const requiresStoreSelection =
               profileData.requiresStoreSelection === true ||
               profileData.storeSelectionRequired === true;
@@ -169,64 +180,58 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
               store:
                 resolvedStore || normalizedProfile.store || userPayload.store,
               storeId: resolvedStoreId || userPayload.storeId,
-              requiresStoreSelection: requiresStoreSelection,
-              assignedStores: assignedStores,
-              defaultStore: defaultStore,
+              requiresStoreSelection,
+              assignedStores,
+              defaultStore,
               isStoreManager: profileData.isStoreManager || false,
             };
 
-            // Store the full profile data for later use
             localStorage.setItem(
               "authMeData",
               JSON.stringify({
-                requiresStoreSelection: requiresStoreSelection,
-                assignedStores: assignedStores,
-                defaultStore: defaultStore,
+                requiresStoreSelection,
+                assignedStores,
+                defaultStore,
                 isStoreManager: profileData.isStoreManager || false,
-              }),
+              })
             );
 
             if (resolvedStore || resolvedStoreId) {
               const finalStoreId = resolvedStoreId;
-
-              // Existing logic (keep this)
               persistActiveStore(
                 resolvedStore || userPayload.store,
-                finalStoreId,
+                finalStoreId
               );
 
-              // 🔴 ADD THESE LINES (NORMALIZATION FIX)
               if (finalStoreId) {
                 localStorage.setItem("currentStoreId", finalStoreId.toString());
-
                 localStorage.setItem(
                   "selectedStore",
                   JSON.stringify({
                     id: finalStoreId,
-                    name: resolvedStore?.name || userPayload.store?.name || "",
+                    name:
+                      resolvedStore?.name || userPayload.store?.name || "",
                     storeCode:
                       resolvedStore?.storeCode ||
                       resolvedStore?.code ||
                       userPayload.store?.storeCode ||
                       userPayload.store?.code ||
                       "",
-                  }),
+                  })
                 );
               }
             } else if (userPayload.storeId) {
               persistActiveStore(userPayload.store, userPayload.storeId);
-
-              // 🔴 ADD THIS TOO (fallback path)
               localStorage.setItem(
                 "currentStoreId",
-                userPayload.storeId.toString(),
+                userPayload.storeId.toString()
               );
             } else {
               persistActiveStore(null, null);
             }
           }
         } catch (profileError) {
-          console.error("Failed to fetch extended user profile:", profileError);
+          console.error("Failed to fetch user profile details:", profileError);
           if (userPayload.store || userPayload.storeId) {
             persistActiveStore(userPayload.store, userPayload.storeId);
           } else {
@@ -236,7 +241,7 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
 
         localStorage.setItem("user", JSON.stringify(userPayload));
 
-        // 3) update your parent Login state
+        if (setRole) setRole(userPayload.roles);
         setUser({
           accesstoken: res.data.accessToken,
           refresh: res.data.refreshToken,
@@ -244,59 +249,132 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
         });
         setLogin(true);
       } else {
-        throw new Error("Incorrect OTP");
+        throw new Error("Invalid or expired OTP");
       }
     } catch (e) {
-      console.error("OTP verify failed:", e);
-      setError(e.response?.data?.message || e.message || "OTP failed");
-      setIsModalOpen(true);
+      console.error("OTP verification failed:", e);
+      const errMsg =
+        e.response?.data?.message ||
+        e.message ||
+        "Invalid OTP. Please check the code and try again.";
+      setError(errMsg);
       setOtp("");
+      if (otpInputRef.current) {
+        const firstInput = otpInputRef.current.querySelector("input");
+        if (firstInput) firstInput.focus();
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (newOtp) => {
+    const clean = newOtp.replace(/[^0-9]/g, "").slice(0, 6);
+    setOtp(clean);
+    if (error) setError("");
+
+    // Auto-submit when user reaches 6 digits
+    if (clean.length === 6 && !loading) {
+      executeVerify(clean);
+    }
+  };
+
+  const onSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (otp.length === 6 && !loading) {
+      executeVerify(otp);
     }
   };
 
   return (
     <>
       <form onSubmit={onSubmit}>
-        <div className={styles.otps} ref={otpInputRef}>
+        <div className={styles.otpBoxesContainer} ref={otpInputRef}>
           <OtpInput
             value={otp}
-            onChange={setOtp}
+            onChange={handleOtpChange}
             numInputs={6}
-            renderSeparator={<span></span>}
-            renderInput={(props) => (
+            renderSeparator={<span style={{ width: "8px" }} />}
+            renderInput={(inputProps) => (
               <input
-                {...props}
-                required
-                autoFocus={props.index === 0}
-                type="number"
+                {...inputProps}
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                className={styles.otpInputBox}
               />
             )}
             shouldAutoFocus={true}
           />
         </div>
 
+        {error && (
+          <div className={styles.otpErrorBanner}>
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
+
         <div className={styles.resendRow}>
-          <span style={{ color: "#64748b", marginRight: "6px" }}>Didn&apos;t receive code?</span>
-          <a
-            href="#"
-            className={styles.resendLink}
-            onClick={(e) => {
-              e.preventDefault();
-              resendOtp();
-            }}
-          >
-            Resend OTP
-          </a>
+          <span>Didn&apos;t receive code?</span>
+          {timer > 0 ? (
+            <span className={styles.resendCountdown}>Resend in {timer}s</span>
+          ) : (
+            <button
+              type="button"
+              className={styles.resendLink}
+              onClick={handleResend}
+            >
+              Resend OTP
+            </button>
+          )}
         </div>
 
-        {!loading && (
-          <button type="submit" className={styles.primaryButton}>
-            Verify &amp; Sign In
-          </button>
+        <button
+          type="submit"
+          disabled={loading || otp.length !== 6}
+          className={styles.primaryButton}
+        >
+          {loading ? (
+            <>
+              <Loader2 className={styles.spinner} size={18} />
+              <span>Verifying Code...</span>
+            </>
+          ) : (
+            <>
+              <span>Verify &amp; Sign In</span>
+              <CheckCircle2 size={18} />
+            </>
+          )}
+        </button>
+
+        {onPasskeyFallback && (
+          <>
+            <div className={styles.orDivider}>
+              <span>OR</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onPasskeyFallback}
+              disabled={loading || passkeyLoading}
+              className={styles.passkeyButton}
+            >
+              {passkeyLoading ? (
+                <>
+                  <Loader2 className={styles.spinner} size={18} color="#ea580c" />
+                  <span>Verifying Passkey...</span>
+                </>
+              ) : (
+                <>
+                  <Fingerprint size={20} color="#ea580c" />
+                  <span>Sign in with Passkey instead</span>
+                </>
+              )}
+            </button>
+          </>
         )}
-        {loading && <Loading />}
       </form>
 
       {isModalOpen && (

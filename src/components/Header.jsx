@@ -3,9 +3,9 @@ import acmLogo from "../images/acm-logo.png";
 
 function Header() {
   return (
-    <div className={styles.logoHeader}>
+    <div className={styles.headerLogoWrapper}>
       <img
-        className={styles.logo}
+        className={styles.headerLogo}
         src={acmLogo}
         alt="Anjali Constructions and Materials Logo"
       />
