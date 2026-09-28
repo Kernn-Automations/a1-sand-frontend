@@ -1,21 +1,20 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import styles from "./Login.module.css";
 import axios from "axios";
 import OTP from "./OTP";
 import Loading from "./Loading";
 import ErrorModal from "./ErrorModal";
 import { useAuth } from "../Auth";
-import { KeyRound, Smartphone, Fingerprint, Sparkles, ShieldCheck } from "lucide-react";
+import { Fingerprint, ShieldCheck, ArrowRight, Loader2, KeyRound } from "lucide-react";
 import { loginWithPasskey, isPasskeySupported } from "../services/passkeyService";
 
 function Input({ setLogin, setUser, setRole }) {
   const { saveTokens } = useAuth();
-  const [loginMode, setLoginMode] = useState("passkey"); // "passkey" | "otp"
-  const [email, setEmail] = useState(""); // mobile number
+  const [mobile, setMobile] = useState("");
   const [ontap, setOntap] = useState(false);
-  const [res, setRes] = useState();
   const [resp, setResp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [smsNotice, setSmsNotice] = useState("");
@@ -24,28 +23,78 @@ function Input({ setLogin, setUser, setRole }) {
 
   const onMobileChange = (e) => {
     const onlyNums = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
-    setEmail(onlyNums);
+    setMobile(onlyNums);
   };
 
-  // 🔑 1-Click Biometric Passkey Login (WebAuthn / FIDO2)
-  const onPasskeySubmit = async (e) => {
+  // 📲 Send Mobile OTP
+  const onSendOtpSubmit = async (e) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
 
-    if (!isPasskeySupported()) {
-      setError("Passkeys are not supported on this browser. Please use Mobile OTP.");
+    if (!mobile || mobile.length !== 10) {
+      setError("Please enter a valid 10-digit mobile number.");
       setIsModalOpen(true);
       return;
     }
 
     setLoading(true);
+    setSmsNotice("");
+
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+    const isMobileBrowser = window.innerWidth <= 768 || isMobileDevice;
 
     try {
-      const response = await loginWithPasskey(email);
+      const response = await axios.post(
+        `${VITE_API}/auth/login`,
+        {
+          mobile,
+          allowMobile: true,
+          deviceType: isMobileBrowser ? "mobile" : "web",
+        },
+        {
+          headers: {
+            "X-Allow-Mobile": "true",
+            "X-Device-Type": isMobileBrowser ? "mobile" : "web",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setOntap(true);
+        setResp(true);
+        if (response.data?.smsDisabled) {
+          setSmsNotice(response.data.message);
+        }
+      } else {
+        setResp(false);
+        setOntap(false);
+      }
+    } catch (e) {
+      setOntap(false);
+      setError(e.response?.data?.message || "Failed to send OTP. Please try again.");
+      setIsModalOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🔑 Instant 1-Touch Passkey Login (WebAuthn / FIDO2)
+  const onPasskeySubmit = async () => {
+    if (!isPasskeySupported()) {
+      setError("Passkeys are not supported on this browser or platform. Please use Mobile OTP.");
+      setIsModalOpen(true);
+      return;
+    }
+
+    setPasskeyLoading(true);
+
+    try {
+      const response = await loginWithPasskey(mobile);
 
       if (response && response.accessToken) {
-        // Save tokens
         saveTokens(response.accessToken, response.refreshToken);
 
         const baseUserData = response.data?.user || response.data || {};
@@ -56,7 +105,7 @@ function Input({ setLogin, setUser, setRole }) {
           userDivision: response.division || baseUserData.userDivision,
         };
 
-        // Fetch user profile
+        // Fetch detailed user profile
         try {
           const profileResponse = await axios.get(`${VITE_API}/auth/me`, {
             headers: {
@@ -114,341 +163,180 @@ function Input({ setLogin, setUser, setRole }) {
       const msg =
         err.response?.data?.message ||
         err.message ||
-        "Passkey authentication failed. Please use Mobile OTP.";
+        "Passkey authentication failed. Please sign in with Mobile OTP.";
       setError(msg);
       setIsModalOpen(true);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  // 📲 Standard Mobile OTP Login
-  const onOtpSubmit = async (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-
-    if (!email || email.length !== 10) {
-      setError("Please enter a valid 10-digit mobile number.");
-      setIsModalOpen(true);
-      return;
-    }
-
-    setOntap(true);
-    setResp(true);
-    setLoading(true);
-    setSmsNotice("");
-
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-    const isMobileBrowser = window.innerWidth <= 768 || isMobileDevice;
-
-    try {
-      const response = await axios.post(
-        `${VITE_API}/auth/login`,
-        {
-          mobile: email,
-          allowMobile: true,
-          deviceType: isMobileBrowser ? "mobile" : "web",
-        },
-        {
-          headers: {
-            "X-Allow-Mobile": "true",
-            "X-Device-Type": isMobileBrowser ? "mobile" : "web",
-          },
-        }
-      );
-
-      setRes(response.data);
-      if (response.status === 200) {
-        setLoading(false);
-        setResp(true);
-        if (response.data?.smsDisabled) {
-          setSmsNotice(response.data.message);
-        }
-      } else {
-        setResp(false);
-        setOntap(false);
-      }
-    } catch (e) {
-      setOntap(false);
-      setError(e.response?.data?.message || "Server error");
-      setIsModalOpen(true);
-    } finally {
-      setLoading(false);
+      setPasskeyLoading(false);
     }
   };
 
   const closeModal = () => setIsModalOpen(false);
 
   return (
-    <>
-      <div className={styles.inputbox}>
-        <div className={styles.wel}>
-          <h1>Welcome!</h1>
-        </div>
-
-        {/* Login Method Toggle Tabs */}
-        {!ontap && (
-          <div
-            style={{
-              display: "flex",
-              backgroundColor: "#f1f5f9",
-              borderRadius: "10px",
-              padding: "4px",
-              marginBottom: "20px",
-              maxWidth: "350px",
-              width: "100%",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                setLoginMode("passkey");
-                setOntap(false);
-              }}
-              style={{
-                flex: 1,
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: loginMode === "passkey" ? "#ffffff" : "transparent",
-                color: loginMode === "passkey" ? "#ea580c" : "#64748b",
-                fontWeight: loginMode === "passkey" ? 700 : 500,
-                fontSize: "13px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                boxShadow:
-                  loginMode === "passkey"
-                    ? "0 2px 4px rgba(0,0,0,0.06)"
-                    : "none",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <KeyRound size={15} />
-              <span>Passkey (Instant)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setLoginMode("otp");
-                setOntap(false);
-              }}
-              style={{
-                flex: 1,
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: loginMode === "otp" ? "#ffffff" : "transparent",
-                color: loginMode === "otp" ? "#ea580c" : "#64748b",
-                fontWeight: loginMode === "otp" ? 700 : 500,
-                fontSize: "13px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                boxShadow:
-                  loginMode === "otp"
-                    ? "0 2px 4px rgba(0,0,0,0.06)"
-                    : "none",
-                transition: "all 0.2s ease",
-              }}
-            >
-              <Smartphone size={15} />
-              <span>Mobile OTP</span>
-            </button>
+    <div className={styles.authCard}>
+      {!ontap ? (
+        <>
+          <div className={styles.titleArea}>
+            <h1 className={styles.title}>Welcome</h1>
+            <p className={styles.subtitle}>
+              Sign in to Anjali Constructions & Materials
+            </p>
           </div>
-        )}
 
-        <div className={styles.inputContainer}>
-          {/* 🔑 MODE 1: FIDO2 WEBAUTHN PASSKEY LOGIN */}
-          {loginMode === "passkey" && (
-            <form onSubmit={onPasskeySubmit}>
-              <p className={styles.p}>
-                Sign in instantly with your Fingerprint, Face ID, or Screen Lock
-              </p>
-
-              <label className={styles.label}>
-                Registered Mobile (Optional)
-              </label>
-              <input
-                type="tel"
-                inputMode="numeric"
-                pattern="[0-9]{10}"
-                maxLength={10}
-                onChange={onMobileChange}
-                value={email}
-                className={styles.input}
-                placeholder="10-digit mobile (or leave blank)"
-              />
-
-              <div
-                style={{
-                  maxWidth: "350px",
-                  padding: "12px 14px",
-                  backgroundColor: "#fff7ed",
-                  border: "1px solid #fed7aa",
-                  borderRadius: "10px",
-                  marginBottom: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                }}
-              >
-                <Fingerprint size={24} color="#ea580c" style={{ flexShrink: 0 }} />
-                <div style={{ fontSize: "12px", color: "#9a3412", lineHeight: 1.4 }}>
-                  <strong>Instant & Zero-Cost:</strong> Click below to verify
-                  using your device biometrics (Windows Hello, Touch ID, Face ID,
-                  or Fingerprint).
-                </div>
+          <form onSubmit={onSendOtpSubmit}>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Mobile Number</label>
+              <div className={styles.phoneInputWrapper}>
+                <span className={styles.countryCode}>🇮🇳 +91</span>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  onChange={onMobileChange}
+                  value={mobile}
+                  className={styles.phoneInput}
+                  placeholder="Enter 10-digit mobile"
+                  autoFocus
+                  required
+                />
               </div>
+            </div>
 
-              {!loading && (
-                <button
-                  type="submit"
-                  className={styles.sendbutton}
-                  style={{
-                    marginTop: "8px",
-                    marginBottom: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <Fingerprint size={18} />
-                  <span>Sign In with Passkey</span>
-                </button>
-              )}
-
-              <div
-                style={{
-                  maxWidth: "350px",
-                  textAlign: "center",
-                  marginBottom: "40px",
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => setLoginMode("otp")}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#ea580c",
-                    fontSize: "12.5px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  First time on this device? Log in with Mobile OTP &rarr;
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* 📲 MODE 2: MOBILE OTP LOGIN */}
-          {loginMode === "otp" && (
-            <>
-              {!ontap && (
-                <form onSubmit={onOtpSubmit}>
-                  <p className={styles.p}>Login via One-Time Password</p>
-                  <label className={styles.label}>Mobile number</label>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="[0-9]{10}"
-                    maxLength={10}
-                    onChange={onMobileChange}
-                    value={email}
-                    className={styles.input}
-                    placeholder="10-digit mobile"
-                    required
-                  />
-
-                  {!loading && (
-                    <button
-                      type="submit"
-                      className={styles.sendbutton}
-                      style={{ marginTop: "12px", marginBottom: "18px" }}
-                    >
-                      Send OTP
-                    </button>
-                  )}
-
-                  <div style={{ maxWidth: "350px", textAlign: "center", marginBottom: "40px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setLoginMode("passkey")}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#ea580c",
-                        fontSize: "12.5px",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                      }}
-                    >
-                      &larr; Switch back to Passkey Login
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {ontap && !loading && resp && (
+            <button
+              type="submit"
+              disabled={loading || passkeyLoading}
+              className={styles.primaryButton}
+            >
+              {loading ? (
                 <>
-                  {smsNotice && (
-                    <div
-                      style={{
-                        maxWidth: "350px",
-                        marginBottom: "16px",
-                        padding: "10px 14px",
-                        backgroundColor: "#fff7ed",
-                        border: "1px solid #fed7aa",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                        color: "#c2410c",
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {smsNotice}
-                    </div>
-                  )}
-                  <OTP
-                    email={email}
-                    resendOtp={onOtpSubmit}
-                    setLogin={setLogin}
-                    setUser={setUser}
-                    setRole={setRole}
-                  />
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Sending OTP...</span>
+                </>
+              ) : (
+                <>
+                  <span>Send OTP</span>
+                  <ArrowRight size={17} />
                 </>
               )}
-            </>
-          )}
+            </button>
+          </form>
 
-          {loading && (
-            <div className={styles.loadingdiv}>
-              <Loading />
+          {/* Clean OR Divider */}
+          <div className={styles.divider}>
+            <span>OR</span>
+          </div>
+
+          {/* 1-Click Passkey Button */}
+          <button
+            type="button"
+            onClick={onPasskeySubmit}
+            disabled={loading || passkeyLoading}
+            className={styles.passkeyButton}
+          >
+            {passkeyLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" color="#ea580c" />
+                <span>Verifying Biometrics...</span>
+              </>
+            ) : (
+              <>
+                <Fingerprint size={20} color="#ea580c" />
+                <span>Sign in with Passkey</span>
+              </>
+            )}
+          </button>
+
+          <div className={styles.securityNote}>
+            <ShieldCheck size={14} color="#16a34a" />
+            <span>FIDO2 WebAuthn & 256-bit SSL Protected</span>
+          </div>
+        </>
+      ) : (
+        /* OTP Verification Screen */
+        <div className={styles.otpWrapper}>
+          <div className={styles.titleArea}>
+            <h1 className={styles.title}>Enter Verification Code</h1>
+            <p className={styles.subtitle}>
+              We sent a 6-digit code to your registered mobile
+            </p>
+          </div>
+
+          <div className={styles.otpTargetInfo}>
+            <span className={styles.otpTargetText}>
+              📱 +91 {mobile}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setOntap(false);
+                setResp(false);
+              }}
+              className={styles.editMobileLink}
+            >
+              Change
+            </button>
+          </div>
+
+          {smsNotice && (
+            <div
+              style={{
+                marginBottom: "16px",
+                padding: "10px 14px",
+                backgroundColor: "#fff7ed",
+                border: "1px solid #fed7aa",
+                borderRadius: "10px",
+                fontSize: "12px",
+                color: "#c2410c",
+                lineHeight: 1.4,
+              }}
+            >
+              {smsNotice}
             </div>
           )}
-        </div>
 
-        {isModalOpen && (
-          <ErrorModal
-            isOpen={isModalOpen}
-            message={error}
-            onClose={closeModal}
+          <OTP
+            email={mobile}
+            resendOtp={onSendOtpSubmit}
+            setLogin={setLogin}
+            setUser={setUser}
+            setRole={setRole}
           />
-        )}
-      </div>
-    </>
+
+          <div className={styles.divider}>
+            <span>OR</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onPasskeySubmit}
+            disabled={passkeyLoading}
+            className={styles.passkeyButton}
+          >
+            {passkeyLoading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" color="#ea580c" />
+                <span>Verifying Biometrics...</span>
+              </>
+            ) : (
+              <>
+                <Fingerprint size={20} color="#ea580c" />
+                <span>Sign in with Passkey Instead</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <ErrorModal
+          isOpen={isModalOpen}
+          message={error}
+          onClose={closeModal}
+        />
+      )}
+    </div>
   );
 }
 

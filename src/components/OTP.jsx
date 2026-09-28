@@ -259,7 +259,6 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
   return (
     <>
       <form onSubmit={onSubmit}>
-        <label className={styles.otplabel}>OTP</label>
         <div className={styles.otps} ref={otpInputRef}>
           <OtpInput
             value={otp}
@@ -268,7 +267,6 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
             renderSeparator={<span></span>}
             renderInput={(props) => (
               <input
-                className={styles.otps}
                 {...props}
                 required
                 autoFocus={props.index === 0}
@@ -278,20 +276,25 @@ function OTP({ email, resendOtp, setLogin, setUser }) {
             shouldAutoFocus={true}
           />
         </div>
-        <p className={styles.resend}>
+
+        <div className={styles.resendRow}>
+          <span style={{ color: "#64748b", marginRight: "6px" }}>Didn&apos;t receive code?</span>
           <a
             href="#"
+            className={styles.resendLink}
             onClick={(e) => {
               e.preventDefault();
               resendOtp();
             }}
           >
-            Resend Again
+            Resend OTP
           </a>
-        </p>
+        </div>
 
         {!loading && (
-          <button className={styles.verifybutton}>Verify OTP</button>
+          <button type="submit" className={styles.primaryButton}>
+            Verify &amp; Sign In
+          </button>
         )}
         {loading && <Loading />}
       </form>

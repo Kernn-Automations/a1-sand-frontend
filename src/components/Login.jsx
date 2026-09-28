@@ -37,40 +37,33 @@ function Login() {
   }, [login, navigate]);
 
   return (
-    <>
-      <div className={`container-fluid ${styles.cont}`}>
-        {!login && (
-          <>
-            <div className={styles.logincontainer}>
-              <Header />
-              <main className={styles.formWrapper}>
-                {sessionConflictMessage && (
-                  <div
-                    style={{
-                      width: "100%",
-                      maxWidth: 520,
-                      margin: "0 auto 18px",
-                      padding: "14px 16px",
-                      borderRadius: 14,
-                      background: "rgba(201, 45, 58, 0.10)",
-                      border: "1px solid rgba(201, 45, 58, 0.22)",
-                      color: "#8b1e2d",
-                      fontWeight: 600,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {sessionConflictMessage}
-                  </div>
-                )}
-                <Input setLogin={setLogin} setUser={setUser} />
-              </main>
-              <Footer />
+    <div className={styles.cont}>
+      {!login && (
+        <div className={styles.logincontainer}>
+          <Header />
+          {sessionConflictMessage && (
+            <div
+              style={{
+                width: "100%",
+                marginBottom: 16,
+                padding: "12px 14px",
+                borderRadius: 12,
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                color: "#991b1b",
+                fontSize: "13px",
+                lineHeight: 1.5,
+                textAlign: "center",
+              }}
+            >
+              {sessionConflictMessage}
             </div>
-          </>
-        )}
-
-      </div>
-    </>
+          )}
+          <Input setLogin={setLogin} setUser={setUser} />
+          <Footer />
+        </div>
+      )}
+    </div>
   );
 }
 
