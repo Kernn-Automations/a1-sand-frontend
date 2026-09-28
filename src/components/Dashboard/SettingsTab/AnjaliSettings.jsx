@@ -17,10 +17,12 @@ import {
   Mail,
   MapPin,
   MessageSquare,
-  KeyRound
+  KeyRound,
+  Fingerprint
 } from 'lucide-react';
 import { isAdmin, isSuperAdmin } from '../../../utils/roleUtils';
 import acmLogo from '../../../images/acm-logo.png';
+import PasskeyManagerModal from '../PasskeyManagerModal';
 
 export default function AnjaliSettings() {
   const navigate = useNavigate();
@@ -39,6 +41,7 @@ export default function AnjaliSettings() {
   const [taxRate, setTaxRate] = useState('0');
   const [smsServiceEnabled, setSmsServiceEnabled] = useState(true);
   const [togglingSms, setTogglingSms] = useState(false);
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
 
   // Organization Legal Details
   const [org, setOrg] = useState({
@@ -694,6 +697,44 @@ export default function AnjaliSettings() {
               <strong>Super Admin SMS Bypass:</strong> Super Admin logins are exempted from the SMS block. If Super Admin requests a login OTP, the SMS is dispatched even when the service is globally disabled.
             </div>
           </div>
+
+          <div style={{
+            marginTop: 14,
+            paddingTop: 14,
+            borderTop: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 10
+          }}>
+            <div>
+              <strong style={{ fontSize: 13, color: '#0f172a' }}>Passkey Device Authenticators</strong>
+              <p style={{ fontSize: 11.5, color: '#64748b', margin: '2px 0 0 0' }}>
+                View registered biometric devices (Fingerprint, Touch ID, Face ID, Windows Hello) or enroll new devices.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPasskeyModalOpen(true)}
+              style={{
+                backgroundColor: '#ffffff',
+                border: '1.5px solid #ea580c',
+                color: '#ea580c',
+                padding: '8px 14px',
+                borderRadius: 8,
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <Fingerprint size={16} />
+              <span>Manage My Passkeys</span>
+            </button>
+          </div>
         </div>
 
         {/* Save Button */}
@@ -710,6 +751,14 @@ export default function AnjaliSettings() {
           </div>
         )}
       </form>
+
+      {isPasskeyModalOpen && (
+        <PasskeyManagerModal
+          isOpen={isPasskeyModalOpen}
+          onClose={() => setIsPasskeyModalOpen(false)}
+          user={user}
+        />
+      )}
     </div>
   );
 }

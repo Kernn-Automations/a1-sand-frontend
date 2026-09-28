@@ -15,6 +15,8 @@ import SettingRoutes from "./SettingsTab/SettingRoutes";
 import ReportsRoutes from "./Reports/ReportsRoutes";
 import LicenseBanner from "./Licensing/LicenseBanner";
 import LicenseLockoutOverlay from "./Licensing/LicenseLockoutOverlay";
+import PasskeyPromptModal from "./PasskeyPromptModal";
+import { isPasskeySupported } from "../../services/passkeyService";
 
 // Lazy-loaded Routes
 const HomePage = lazy(() => import("./HomePage/HomePage"));
@@ -66,6 +68,27 @@ export default function Dashboard({
   const [hover, setHover] = useState(false);
   const [tab, setTab] = useState("home");
   const [isMobile, setIsMobile] = useState(false);
+  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+
+  // Detect if new device is not registered for passkey and prompt user
+  useEffect(() => {
+    if (!storedUser) return;
+    const userObj = storedUser?.user || storedUser;
+    const userId = userObj?.id || userObj?.employeeId;
+    if (!userId) return;
+
+    if (!isPasskeySupported()) return;
+
+    const isRegistered = localStorage.getItem(`passkey_registered_${userId}`);
+    const isDismissed = sessionStorage.getItem(`passkey_prompt_dismissed_${userId}`);
+
+    if (!isRegistered && !isDismissed) {
+      const timer = setTimeout(() => {
+        setShowPasskeyPrompt(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [storedUser]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -268,6 +291,14 @@ export default function Dashboard({
 
       {/* Global Hard Lockout Shield */}
       <LicenseLockoutOverlay />
+
+      {/* Auto-Prompt to Register New Device as Passkey */}
+      {showPasskeyPrompt && (
+        <PasskeyPromptModal
+          user={storedUser?.user || storedUser}
+          onClose={() => setShowPasskeyPrompt(false)}
+        />
+      )}
     </div>
   );
 }

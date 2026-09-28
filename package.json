@@ -17,6 +17,7 @@
     "@mui/material": "^5.14.11",
     "@phosphor-icons/react": "^2.1.10",
     "@react-google-maps/api": "^2.20.6",
+    "@simplewebauthn/browser": "^14.0.0",
     "axios": "^1.8.3",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",

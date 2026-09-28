@@ -5,14 +5,13 @@ import OTP from "./OTP";
 import Loading from "./Loading";
 import ErrorModal from "./ErrorModal";
 import { useAuth } from "../Auth";
-import { KeyRound, Smartphone, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { KeyRound, Smartphone, Fingerprint, Sparkles, ShieldCheck } from "lucide-react";
+import { loginWithPasskey, isPasskeySupported } from "../services/passkeyService";
 
 function Input({ setLogin, setUser, setRole }) {
   const { saveTokens } = useAuth();
   const [loginMode, setLoginMode] = useState("passkey"); // "passkey" | "otp"
   const [email, setEmail] = useState(""); // mobile number
-  const [passkey, setPasskey] = useState("");
-  const [showPasskey, setShowPasskey] = useState(false);
   const [ontap, setOntap] = useState(false);
   const [res, setRes] = useState();
   const [resp, setResp] = useState(false);
@@ -28,70 +27,40 @@ function Input({ setLogin, setUser, setRole }) {
     setEmail(onlyNums);
   };
 
-  const onPasskeyChange = (e) => {
-    const onlyNums = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
-    setPasskey(onlyNums);
-  };
-
-  // 🔑 Instant Passkey Login (Zero SMS OTP Cost)
+  // 🔑 1-Click Biometric Passkey Login (WebAuthn / FIDO2)
   const onPasskeySubmit = async (e) => {
     if (e && e.preventDefault) {
       e.preventDefault();
     }
 
-    if (!email || email.length !== 10) {
-      setError("Please enter a valid 10-digit mobile number.");
-      setIsModalOpen(true);
-      return;
-    }
-
-    if (!passkey || passkey.length !== 4) {
-      setError("Please enter your 4-digit Passkey PIN.");
+    if (!isPasskeySupported()) {
+      setError("Passkeys are not supported on this browser. Please use Mobile OTP.");
       setIsModalOpen(true);
       return;
     }
 
     setLoading(true);
 
-    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-    const isMobileBrowser = window.innerWidth <= 768 || isMobileDevice;
-
     try {
-      const response = await axios.post(
-        `${VITE_API}/auth/mpin/login`,
-        {
-          mobile: email,
-          mpin: passkey,
-          allowMobile: true,
-          deviceType: isMobileBrowser ? "mobile" : "web",
-        },
-        {
-          headers: {
-            "X-Allow-Mobile": "true",
-            "X-Device-Type": isMobileBrowser ? "mobile" : "web",
-          },
-        }
-      );
+      const response = await loginWithPasskey(email);
 
-      if (response.status === 200) {
+      if (response && response.accessToken) {
         // Save tokens
-        saveTokens(response.data.accessToken, response.data.refreshToken);
+        saveTokens(response.accessToken, response.refreshToken);
 
-        const baseUserData = response.data.data?.user || response.data.data || {};
+        const baseUserData = response.data?.user || response.data || {};
         let userPayload = {
           ...baseUserData,
-          roles: response.data.roles || baseUserData.roles,
+          roles: response.roles || baseUserData.roles,
           showDivisions: false,
-          userDivision: response.data.division || baseUserData.userDivision,
+          userDivision: response.division || baseUserData.userDivision,
         };
 
         // Fetch user profile
         try {
           const profileResponse = await axios.get(`${VITE_API}/auth/me`, {
             headers: {
-              Authorization: `Bearer ${response.data.accessToken}`,
+              Authorization: `Bearer ${response.accessToken}`,
             },
           });
 
@@ -127,18 +96,25 @@ function Input({ setLogin, setUser, setRole }) {
           console.warn("Could not fetch profile details:", profileErr);
         }
 
+        const userId = userPayload.id || userPayload.employeeId;
+        if (userId) {
+          localStorage.setItem(`passkey_registered_${userId}`, "true");
+        }
+
         localStorage.setItem("user", JSON.stringify(userPayload));
         if (setRole) setRole(userPayload.roles);
         setUser(userPayload);
         setLogin(true);
       } else {
-        setError("Invalid Passkey or user not found.");
+        setError("Passkey sign-in failed. Please try again or use Mobile OTP.");
         setIsModalOpen(true);
       }
     } catch (err) {
+      console.error("Passkey login error:", err);
       const msg =
         err.response?.data?.message ||
-        "Invalid Passkey. If you haven't set up your passkey yet, please log in using Mobile OTP.";
+        err.message ||
+        "Passkey authentication failed. Please use Mobile OTP.";
       setError(msg);
       setIsModalOpen(true);
     } finally {
@@ -291,12 +267,16 @@ function Input({ setLogin, setUser, setRole }) {
         )}
 
         <div className={styles.inputContainer}>
-          {/* 🔑 MODE 1: PASSKEY LOGIN */}
+          {/* 🔑 MODE 1: FIDO2 WEBAUTHN PASSKEY LOGIN */}
           {loginMode === "passkey" && (
             <form onSubmit={onPasskeySubmit}>
-              <p className={styles.p}>Enter your mobile number and 4-digit Passkey</p>
+              <p className={styles.p}>
+                Sign in instantly with your Fingerprint, Face ID, or Screen Lock
+              </p>
 
-              <label className={styles.label}>Mobile number</label>
+              <label className={styles.label}>
+                Registered Mobile (Optional)
+              </label>
               <input
                 type="tel"
                 inputMode="numeric"
@@ -305,56 +285,55 @@ function Input({ setLogin, setUser, setRole }) {
                 onChange={onMobileChange}
                 value={email}
                 className={styles.input}
-                placeholder="10-digit mobile"
-                required
+                placeholder="10-digit mobile (or leave blank)"
               />
 
-              <label className={styles.label}>4-Digit Passkey</label>
-              <div style={{ position: "relative", maxWidth: "350px", width: "100%" }}>
-                <input
-                  type={showPasskey ? "text" : "password"}
-                  inputMode="numeric"
-                  pattern="[0-9]{4}"
-                  maxLength={4}
-                  onChange={onPasskeyChange}
-                  value={passkey}
-                  className={styles.input}
-                  placeholder="••••"
-                  style={{
-                    letterSpacing: "8px",
-                    fontWeight: 700,
-                    paddingRight: "40px",
-                  }}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPasskey(!showPasskey)}
-                  style={{
-                    position: "absolute",
-                    right: 8,
-                    top: "30%",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#94a3b8",
-                  }}
-                >
-                  {showPasskey ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              <div
+                style={{
+                  maxWidth: "350px",
+                  padding: "12px 14px",
+                  backgroundColor: "#fff7ed",
+                  border: "1px solid #fed7aa",
+                  borderRadius: "10px",
+                  marginBottom: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <Fingerprint size={24} color="#ea580c" style={{ flexShrink: 0 }} />
+                <div style={{ fontSize: "12px", color: "#9a3412", lineHeight: 1.4 }}>
+                  <strong>Instant & Zero-Cost:</strong> Click below to verify
+                  using your device biometrics (Windows Hello, Touch ID, Face ID,
+                  or Fingerprint).
+                </div>
               </div>
 
               {!loading && (
                 <button
                   type="submit"
                   className={styles.sendbutton}
-                  style={{ marginTop: "12px", marginBottom: "18px" }}
+                  style={{
+                    marginTop: "8px",
+                    marginBottom: "18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
                 >
-                  Sign In with Passkey
+                  <Fingerprint size={18} />
+                  <span>Sign In with Passkey</span>
                 </button>
               )}
 
-              <div style={{ maxWidth: "350px", textAlign: "center", marginBottom: "40px" }}>
+              <div
+                style={{
+                  maxWidth: "350px",
+                  textAlign: "center",
+                  marginBottom: "40px",
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setLoginMode("otp")}
@@ -368,7 +347,7 @@ function Input({ setLogin, setUser, setRole }) {
                     textDecoration: "underline",
                   }}
                 >
-                  Don't have a passkey? Log in with Mobile OTP &rarr;
+                  First time on this device? Log in with Mobile OTP &rarr;
                 </button>
               </div>
             </form>
