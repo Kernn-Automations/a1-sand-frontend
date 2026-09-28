@@ -1,0 +1,1793 @@
+.longformmdl {
+  max-width: 340px !important;
+  min-width: 310px !important;
+  margin-bottom: 15px;
+}
+.longformmdl label {
+  width: 145px;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 14.82px;
+  letter-spacing: 0%;
+  text-align: right;
+  padding-right: 15px;
+  color: var(--primary-color);
+}
+.paymentProofThumbnail {
+  width: 100px; /* Adjust as needed for your desired thumbnail size */
+  height: 100px;
+  object-fit: cover; /* Ensures image covers the area without distortion */
+  cursor: zoom-in; /* Indicates it's clickable for zoom */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.paymentProofThumbnail:hover {
+  transform: scale(1.05);
+}
+
+
+/* New styles for the ImageZoomModal */
+.imageZoomBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7); /* Darker backdrop */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; /* Ensure this is higher than your DialogRoot's backdrop */
+}
+
+.imageZoomContent {
+  position: relative;
+  background: white; /* Or transparent if you just want the image */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.imageZoomCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #333;
+  cursor: pointer;
+  z-index: 10002; /* Ensure close button is above everything */
+}
+
+.imageZoomCloseButton:hover {
+  color: #f00;
+}
+
+.zoomableImage {
+  max-width: 100%;
+  max-height: 70vh; /* Adjust as needed to prevent overflow */
+  display: block; /* Important for react-medium-image-zoom */
+}
+
+/* Ensure react-medium-image-zoom's overlay is styled correctly */
+/* You might need to inspect the generated HTML to target the exact classes */
+.rmiz-modal-content {
+  background-color: transparent !important; /* To prevent double backdrop */
+}
+.rmiz-overlay {
+  background-color: transparent !important; /* To prevent double backdrop */
+  z-index: 10000; /* Match the .imageZoomBackdrop if needed, but react-medium-image-zoom uses its own */
+}
+.longformmdl input,
+.longformmdl select {
+  width: 130px;
+  height: 25px;
+  padding-left: 4px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 13px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+}
+.longformmdl span {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 14.26px;
+  letter-spacing: 1.5%;
+}
+.headmdl {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 29.26px;
+  letter-spacing: 1.5%;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: Auto;
+  color: #555;
+}
+.mdltable thead th {
+  font-size: 12px !important;
+  padding: 3px;
+}
+.mdltable tbody td {
+  font-size: 12px !important;
+  padding: 3px;
+}
+
+.search {
+  position: relative;
+  display: inline-block;
+}
+.search input {
+  width: 240px;
+  height: 35px;
+  border: 1px solid var(--primary-color);
+  border-radius: 5px;
+  padding-left: 4px;
+  font-size: 15px;
+  padding-right: 32px; /* Leave space for the icon */
+  box-shadow: 1px 1px 4px gray;
+}
+
+.search input:focus {
+  border: 1px solid var(--primary-color);
+  outline: none;
+}
+.searchicon {
+  position: absolute;
+  left: 225px;
+  top: 18px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #555;
+  pointer-events: none; /* Makes the icon unclickable */
+}
+
+.xls {
+  width: 150px;
+  height: 40px;
+  padding-left: 30px;
+  border-radius: 6px;
+  margin-right: 15px;
+  margin-bottom: 20px;
+  /* box-shadow: 1px 1px 3px black; */
+  color: #555;
+}
+.xls:hover {
+  outline: 1px solid #555;
+}
+.xls p {
+  float: left;
+  margin-bottom: 0;
+  font-size: 16px;
+  font-weight: 500;
+  padding-top: 6px;
+}
+.xls img {
+  width: 35px;
+  height: 35px;
+}
+.images {
+  width: 200px;
+}
+
+/*  */
+.buttonbox {
+  width: 80px;
+  height: auto;
+}
+.buttonbox button {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600px;
+  transition: 0.2s ease;
+}
+
+.buttonbox button span {
+  padding-top: 3px;
+}
+.buttonbox button:hover {
+  color: #555;
+  transform: scale(1.05);
+}
+
+.entity {
+  /* width: 200px !important; */
+  height: 40px;
+  position: relative;
+  /* top: 20px; */
+}
+.entity label {
+  color: black;
+  font-size: 15px;
+  font-weight: 600;
+}
+.entity select {
+  width: 60px;
+  height: 25px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid gray;
+  border-radius: 6px;
+  margin-left: 10px;
+}
+
+.custDetails {
+  margin-bottom: 10px;
+}
+.custDetails h5 {
+  margin-bottom: 3px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.custDetails p {
+  margin-bottom: 3px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* xl modal */
+
+.longformmdl {
+  max-width: 300px !important;
+  min-width: 280px !important;
+  margin-bottom: 8px;
+}
+.longformmdl label,
+.textform label {
+  width: 140px;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 14.82px;
+  letter-spacing: 0%;
+  text-align: right;
+  padding-right: 15px;
+  color: var(--primary-color);
+}
+.longformmdl input,
+.longformmdl select {
+  width: 120px;
+  height: 25px;
+  padding-left: 2px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 12px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+}
+.longformmdl span {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 14.26px;
+  letter-spacing: 1.5%;
+}
+
+.textform textarea {
+  width: 350px;
+  height: 80px;
+  padding-left: 4px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 12px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+}
+
+.headmdl {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 29.26px;
+  letter-spacing: 1.5%;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: Auto;
+  color: #555;
+}
+.mdltable thead th {
+  font-size: 12px !important;
+  padding: 3px;
+  letter-spacing: 1.5%;
+  color: white;
+  background-color: var(--primary-color);
+  text-align: center;
+}
+.mdltable tbody td {
+  font-size: 12px !important;
+  padding: 3px;
+}
+.mdltable button {
+  width: fit-content;
+  height: 20px;
+  font-size: 11px;
+  padding: 0px 10px;
+  border: none;
+  color: white;
+  margin: 0;
+  border-radius: 3px;
+  background-color: #fd3b3b;
+}
+
+/* credit note details */
+.creditDetails {
+  margin: 20px;
+}
+.creditDetails p {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary-color);
+  padding-left: 40px;
+  margin: 3px;
+}
+.creditDetails p span {
+  color: #333;
+  font-weight: 600;
+  font-size: 15px;
+  padding-right: 20px;
+}
+
+.select input {
+  background: #ffffff !important;
+}
+.selectall {
+  width: 15px;
+  height: 15px;
+}
+
+.select label {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 30.38px;
+  letter-spacing: 0.015em;
+  padding: 6px 10px;
+}
+
+/* Fix z-index issue for payment approvals modal - Use global hierarchy */
+
+
+/* Payment-specific modal styling without z-index conflicts */
+.mdl-title {
+  position: relative;
+}
+
+/* Ensure dialog content has a visible background and padding */
+.dialogContent {
+  background: #ffffff !important;
+  padding: 16px !important;
+  border-radius: 8px;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative !important;
+  z-index: 140002 !important; /* Higher than backdrop */
+}
+
+/* Payment Cards Styling */
+.paymentsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+  max-width: 100%;
+}
+
+/* Ensure maximum 4 cards per row */
+@media (min-width: 1200px) {
+  .paymentsContainer {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .paymentsContainer {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .paymentsContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .paymentsContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.paymentCard {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+  min-height: 300px;
+  width: 100%;
+}
+
+.paymentCard:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.paymentCard > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.paymentImageSection {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.paymentImage {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.paymentImage:hover {
+  transform: scale(1.05);
+}
+
+.paymentDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paymentDetailRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paymentDetailLabel {
+  font-weight: 600;
+  color: #333;
+  min-width: 120px;
+}
+
+.paymentDetailValue {
+  color: #555;
+}
+
+.statusRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ddd;
+}
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.statusPending {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.statusApproved {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.statusRejected {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.approveBtn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  flex: 1;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.approveBtn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.rejectBtn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  flex: 1;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.rejectBtn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* create creidt note  */
+.longform {
+  max-width: 360px !important;
+  min-width: 350px !important;
+  margin-bottom: 20px;
+}
+.longform label {
+  max-width: 160px;
+  min-width: 150px;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 26.82px;
+  letter-spacing: 0%;
+  text-align: right;
+  padding-right: 15px;
+  color: var(--primary-color);
+}
+.changedField {
+  border: 2px solid #198754 !important; /* green border */
+  background-color: #e7f9f0; /* light green background */
+  transition: all 0.3s ease;
+}
+.longform input,
+.longform select {
+  width: 150px;
+  height: 27px;
+  padding-left: 4px;
+  border-radius: 4px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+  font-weight: 500;
+  font-size: 14px;
+}
+.longform span {
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 16.26px;
+  letter-spacing: 1.5%;
+}
+
+.taxform textarea{
+  width: 300px;
+  height: 80px;
+  padding-left: 4px;
+  border-radius: 4px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+  position: relative;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+
+.tableform input,
+.tableform select {
+  width: 100%;
+  height: 25px;
+  padding-left: 4px;
+  border-radius: 4px;
+  /* background-color: #d9d9d9; */
+  border: 1px solid #d9d9d9;
+  box-shadow: 1px 1px 3px #333;
+}
+.tableform {
+  max-width: 200px !important;
+}
+
+.errorinput {
+  outline: 1px solid #ff2020 !important;
+  color: #ff2020 !important;
+}
+.head {
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 29.26px;
+  letter-spacing: 1.5%;
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-decoration-thickness: Auto;
+  color: #555;
+}
+.addbtn {
+  min-width: 80px;
+  height: 27px;
+  padding: 4px 10px;
+  color: #555;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 15.94px;
+  letter-spacing: 1.5%;
+  border-radius: 4px;
+  margin-right: 20px;
+  /* box-shadow: 1px 1px 3px #333; */
+  /* background-color: #d9d9d9; */
+}
+.del {
+  position: relative;
+}
+.del button {
+  position: absolute;
+  left: 110%;
+  top: -4px;
+  background-color: #e1e1e1 !important;
+  width: 40px !important;
+  height: 25px;
+  color: #333 !important;
+  border-radius: 3px;
+  border: 1px solid #bfbfbf !important;
+}
+
+/* ==========================================================================
+   MODERN PAYMENTS & RECEIPTS EXECUTIVE THEME (DARK SLATE #0f172a)
+   ========================================================================== */
+
+.paymentsWrapper {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 70px);
+  color: #1e293b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* --- Hero Banner --- */
+.heroBanner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0d9488 100%);
+  border-radius: 16px;
+  padding: 28px 32px;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 0 8px 10px -6px rgba(15, 23, 42, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBanner::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.heroLeft {
+  max-width: 680px;
+  z-index: 1;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(20, 184, 166, 0.2);
+  color: #5eead4;
+  border: 1px solid rgba(94, 234, 212, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.heroTitle {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroDesc {
+  font-size: 14px;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  z-index: 1;
+  flex-wrap: wrap;
+}
+
+.actionBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0d9488;
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.3);
+}
+
+.actionBtnPrimary:hover {
+  background: #0f766e;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 10px -1px rgba(13, 148, 136, 0.4);
+}
+
+.actionBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.actionBtnSecondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* --- Business KPI Cards --- */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.kpiCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.kpiCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+.kpiIconWrap {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.kpiIconTeal {
+  background: #ccfbf1;
+  color: #0d9488;
+}
+
+.kpiIconEmerald {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.kpiIconIndigo {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.kpiIconAmber {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.kpiInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.kpiValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiSub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+/* --- Filter & Toolbar Bar --- */
+.toolbarCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  flex-wrap: wrap;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 280px;
+  flex-wrap: wrap;
+}
+
+.searchBox {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 420px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.searchInput {
+  width: 100%;
+  height: 38px;
+  padding: 8px 12px 8px 36px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.searchInput:focus {
+  border-color: #0d9488;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.filterSelect {
+  height: 38px;
+  padding: 0 12px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.filterSelect:focus {
+  border-color: #0d9488;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refreshBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.refreshBtn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.viewModeToggle {
+  display: none; /* activated on mobile / tablet */
+}
+
+/* --- Table Styles --- */
+.tableCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.tableHeaderStrip {
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tableHeaderTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tableHeaderCount {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.tableResponsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.modernTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.modernTable th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.modernTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.modernTable tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Table Cells */
+.receiptNoBadge {
+  font-family: monospace;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0d9488;
+  background: #f0fdfa;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccfbf1;
+  display: inline-block;
+}
+
+.customerCell {
+  display: flex;
+  flex-direction: column;
+}
+
+.customerName {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.customerPhone {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+.orderRefLink {
+  font-weight: 600;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.amountCell {
+  font-weight: 800;
+  font-size: 14.5px;
+  color: #0f172a;
+}
+
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.statusBadgePaid {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.tableActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnActionDownload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: #f0fdfa;
+  color: #0d9488;
+  border: 1px solid #99f6e4;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnActionDownload:hover {
+  background: #0d9488;
+  color: #ffffff;
+  border-color: #0d9488;
+}
+
+.btnActionView {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnActionView:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* --- Mobile Card View (<= 768px) --- */
+.mobileCardsGrid {
+  display: none;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.mobilePaymentCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobileCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mobileCardCustomer {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mobileCardAmount {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: right;
+}
+
+.mobileCardMid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.mobileMetaRow {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileMetaLabel {
+  font-size: 10.5px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.mobileMetaValue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 2px;
+}
+
+.mobileCardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mobileCardActions button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* --- Empty State --- */
+.emptyStateContainer {
+  padding: 48px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.emptyStateIcon {
+  font-size: 42px;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.emptyStateTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.emptyStateSubtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* --- Loading State --- */
+.loadingBox {
+  padding: 60px 24px;
+  text-align: center;
+  color: #0d9488;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #ccfbf1;
+  border-top-color: #0d9488;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   OFFICIAL PAYMENT RECEIPT MODAL
+   ========================================================================== */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.receiptModalContainer {
+  background: #ffffff;
+  width: 100%;
+  max-width: 680px;
+  max-height: 92vh;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.receiptModalHeader {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1e293b;
+}
+
+.receiptModalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.receiptIconCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(13, 148, 136, 0.25);
+  color: #2dd4bf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.receiptModalTitleGroup h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+}
+
+.receiptModalTitleGroup p {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.receiptModalBody {
+  padding: 20px 24px;
+  overflow-y: auto;
+  background: #f1f5f9;
+}
+
+.voucherPaper {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.voucherHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.companyTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.companySub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0 0 2px 0;
+}
+
+.companyMeta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.voucherStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.divider {
+  margin: 18px 0;
+  border: none;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.voucherMetaStrip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.voucherMetaItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.metaLabel {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.metaValueHighlight {
+  font-family: monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0d9488;
+  margin-top: 2px;
+}
+
+.metaValue {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.voucherTwoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.voucherColCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.voucherSectionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #0f172a;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.customerNameBig {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.detailRow {
+  display: flex;
+  font-size: 12px;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.detailKey {
+  color: #64748b;
+  min-width: 80px;
+}
+
+.detailVal {
+  color: #1e293b;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.detailValMono {
+  font-family: monospace;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.voucherAmountBox {
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+.amountLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #0d9488;
+}
+
+.amountInWords {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 3px;
+}
+
+.amountFigure {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.remarksBox {
+  font-size: 12px;
+  background: #f8fafc;
+  border-left: 3px solid #0d9488;
+  padding: 10px 14px;
+  border-radius: 0 6px 6px 0;
+  color: #475569;
+  margin-bottom: 16px;
+}
+
+.proofPreviewBox {
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.proofHeader {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.proofLink {
+  color: #0d9488;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.proofThumbnail {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.voucherFooterNote {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.4;
+}
+
+.receiptModalFooter {
+  padding: 14px 24px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.footerActionGroup {
+  display: flex;
+  gap: 10px;
+}
+
+.btnSecondary {
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnSecondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btnPrint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btnPrint:hover {
+  background: #e2e8f0;
+}
+
+.btnDownloadPdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: #0d9488;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 4px rgba(13, 148, 136, 0.25);
+}
+
+.btnDownloadPdf:hover {
+  background: #0f766e;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .paymentsWrapper {
+    padding: 16px;
+  }
+
+  .heroBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .heroActions {
+    width: 100%;
+  }
+
+  .heroActions button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .kpiGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .toolbarCard {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbarLeft {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBox {
+    max-width: 100%;
+  }
+
+  .tableCard {
+    display: none; /* Switch to mobile cards */
+  }
+
+  .mobileCardsGrid {
+    display: grid;
+  }
+
+  .voucherTwoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .voucherMetaStrip {
+    grid-template-columns: 1fr;
+  }
+
+  .voucherAmountBox {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .amountFigure {
+    font-size: 20px;
+  }
+}
+
+

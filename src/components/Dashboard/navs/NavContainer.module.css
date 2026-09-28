@@ -1,0 +1,91 @@
+.logo {
+  padding: 16px 14px 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.navicons {
+  background-color: #ffffff;
+  margin-top: 6px;
+  height: calc(100% - 70px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 8px 6px;
+}
+
+.navicons::-webkit-scrollbar {
+  display: none;
+}
+
+.navicons > div {
+  margin: 4px 0;
+  border-radius: 10px;
+  transition: all 0.18s ease;
+}
+
+.navicons > div a {
+  display: flex;
+  align-items: center;
+  padding: 10px 10px;
+  gap: 16px;
+  text-decoration: none;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.navicons svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #64748b;
+  transition: color 0.18s ease;
+}
+
+.navicons p {
+  margin: 0;
+  padding: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: inherit;
+  line-height: 1;
+}
+
+.navicons > div:hover {
+  background-color: #f8fafc;
+}
+
+.navicons > div:hover a {
+  color: #0f172a;
+}
+
+.navicons > div:hover svg {
+  color: #0f172a;
+}
+
+.active {
+  background-color: #fff7ed !important;
+}
+
+.active a {
+  color: #ea580c !important;
+  font-weight: 700 !important;
+}
+
+.active svg {
+  color: #ea580c !important;
+}
+
+@media (max-width: 768px) {
+  .navicons {
+    height: 100%;
+    padding: 8px;
+  }
+}
