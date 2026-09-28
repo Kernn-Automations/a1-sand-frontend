@@ -10,10 +10,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import LogoutModal from "./LogoutModal";
+import PasskeyModal from "./PasskeyModal";
 import { Link, useNavigate } from "react-router-dom";
 
 function ProfileAvthar({ user, setTab }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const actualUser = user?.user || user || {};
@@ -71,6 +73,28 @@ function ProfileAvthar({ user, setTab }) {
               </div>
             </Link>
 
+            <div onClick={() => setIsPasskeyModalOpen(true)} style={{ cursor: "pointer" }}>
+              <p>
+                <span>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#ea580c"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ margin: "0 6px" }}
+                  >
+                    <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
+                    <circle cx="16.5" cy="7.5" r=".5" />
+                  </svg>
+                </span>
+                Set Passkey
+              </p>
+            </div>
+
             <div onClick={() => setIsModalOpen(true)}>
               <p>
                 <span>
@@ -98,6 +122,12 @@ function ProfileAvthar({ user, setTab }) {
       </PopoverRoot>
 
       {isModalOpen && <LogoutModal isOpen={isModalOpen} onClose={closeModal} />}
+      {isPasskeyModalOpen && (
+        <PasskeyModal
+          isOpen={isPasskeyModalOpen}
+          onClose={() => setIsPasskeyModalOpen(false)}
+        />
+      )}
     </>
   );
 }

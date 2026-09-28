@@ -15,9 +15,11 @@ import {
   FileText,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  MessageSquare,
+  KeyRound
 } from 'lucide-react';
-import { isAdmin } from '../../../utils/roleUtils';
+import { isAdmin, isSuperAdmin } from '../../../utils/roleUtils';
 import acmLogo from '../../../images/acm-logo.png';
 
 export default function AnjaliSettings() {
@@ -25,6 +27,7 @@ export default function AnjaliSettings() {
   const token = localStorage.getItem('accessToken');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userIsAdmin = isAdmin(user);
+  const userIsSuperAdmin = isSuperAdmin(user);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,6 +37,8 @@ export default function AnjaliSettings() {
   const [requireFullPayment, setRequireFullPayment] = useState(true);
   const [enableTax, setEnableTax] = useState(false);
   const [taxRate, setTaxRate] = useState('0');
+  const [smsServiceEnabled, setSmsServiceEnabled] = useState(true);
+  const [togglingSms, setTogglingSms] = useState(false);
 
   // Organization Legal Details
   const [org, setOrg] = useState({
@@ -82,6 +87,9 @@ export default function AnjaliSettings() {
         if (s.default_tax_rate !== undefined) {
           setTaxRate(String(s.default_tax_rate));
         }
+        if (s.smsServiceEnabled !== undefined) {
+          setSmsServiceEnabled(s.smsServiceEnabled === true || s.smsServiceEnabled === 'true');
+        }
       }
 
       if (orgRes.status === 'fulfilled' && orgRes.value.data?.success && orgRes.value.data.data) {
@@ -96,6 +104,30 @@ export default function AnjaliSettings() {
 
   const handleOrgChange = (field, val) => {
     setOrg((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const handleToggleSms = async () => {
+    if (!userIsSuperAdmin) {
+      alert('Only Super Admin can modify SMS Gateway settings.');
+      return;
+    }
+
+    try {
+      setTogglingSms(true);
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.put(
+        `${API_URL}/auth/sms`,
+        { enabled: !smsServiceEnabled },
+        { headers }
+      );
+      if (res.data?.success || res.status === 200) {
+        setSmsServiceEnabled(res.data.smsServiceEnabled);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to toggle SMS service');
+    } finally {
+      setTogglingSms(false);
+    }
   };
 
   const handleSaveSettings = async (e) => {
@@ -119,6 +151,10 @@ export default function AnjaliSettings() {
         company_phone: org.contactPhone,
         company_address: org.registeredAddress,
       };
+
+      if (userIsSuperAdmin) {
+        generalPayload.smsServiceEnabled = smsServiceEnabled;
+      }
 
       await Promise.all([
         axios.put(`${API_URL}/settings/all`, generalPayload, { headers }),
@@ -558,6 +594,106 @@ export default function AnjaliSettings() {
               />
             </div>
           )}
+        </div>
+
+        {/* 6. SMS Gateway & Passkey Authentication Controls (Super Admin Only) */}
+        <div style={styles.card}>
+          <div style={{ ...styles.cardHeader, justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <MessageSquare size={20} color="#ea580c" />
+              <h3 style={styles.cardTitle}>SMS Gateway & Passkey Authentication</h3>
+            </div>
+            {userIsSuperAdmin ? (
+              <span style={{ fontSize: 11, fontWeight: 800, background: '#ffedd5', color: '#c2410c', padding: '3px 10px', borderRadius: 20 }}>
+                Super Admin Exclusive Control
+              </span>
+            ) : (
+              <span style={{ fontSize: 11, fontWeight: 700, background: '#f1f5f9', color: '#64748b', padding: '3px 10px', borderRadius: 20, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Lock size={12} /> Managed by Super Admin
+              </span>
+            )}
+          </div>
+
+          <p style={{ fontSize: '12.5px', color: '#64748b', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+            Control MSG91 SMS OTP dispatch for logins and notifications. Disabling SMS cuts recurring SMS OTP costs by 100%. Employees can instantly log in using their 4-digit Passkey.
+          </p>
+
+          <div style={{
+            background: smsServiceEnabled ? 'rgba(34, 197, 94, 0.06)' : 'rgba(239, 68, 68, 0.06)',
+            border: `1px solid ${smsServiceEnabled ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+            borderRadius: 12,
+            padding: '16px',
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            flexWrap: 'wrap'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  color: smsServiceEnabled ? '#15803d' : '#b91c1c'
+                }}>
+                  {smsServiceEnabled ? '🟢 SMS Service is ENABLED' : '🛑 SMS Service is DISABLED (Passkey Only)'}
+                </span>
+              </div>
+              <p style={{ fontSize: '12px', color: '#64748b', margin: 0, maxWidth: 520, lineHeight: 1.4 }}>
+                {smsServiceEnabled
+                  ? 'MSG91 gateway sends SMS OTPs for every user login attempt.'
+                  : 'SMS OTP dispatch is suppressed to save telecom fees. Regular employees log in with their secure Passkey. Super Admin automatically bypasses this restriction and continues receiving SMS.'}
+              </p>
+            </div>
+
+            {userIsSuperAdmin ? (
+              <button
+                type="button"
+                onClick={handleToggleSms}
+                disabled={togglingSms}
+                style={{
+                  backgroundColor: smsServiceEnabled ? '#ef4444' : '#16a34a',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '9px 18px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: togglingSms ? 'not-allowed' : 'pointer',
+                  opacity: togglingSms ? 0.6 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+              >
+                <MessageSquare size={16} />
+                <span>{togglingSms ? 'Updating...' : smsServiceEnabled ? 'Disable SMS Service' : 'Enable SMS Service'}</span>
+              </button>
+            ) : (
+              <div style={{ fontSize: 12, color: '#94a3b8', fontStyle: 'italic' }}>
+                Contact Super Admin to modify SMS settings.
+              </div>
+            )}
+          </div>
+
+          <div style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: 10,
+            padding: '12px 14px',
+            fontSize: '12px',
+            color: '#475569',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <KeyRound size={18} color="#ea580c" style={{ flexShrink: 0 }} />
+            <div>
+              <strong>Super Admin SMS Bypass:</strong> Super Admin logins are exempted from the SMS block. If Super Admin requests a login OTP, the SMS is dispatched even when the service is globally disabled.
+            </div>
+          </div>
         </div>
 
         {/* Save Button */}
