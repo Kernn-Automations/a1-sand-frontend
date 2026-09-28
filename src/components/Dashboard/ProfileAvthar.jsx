@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/popover";
 import LogoutModal from "./LogoutModal";
 import { Link, useNavigate } from "react-router-dom";
-import { isAdmin, isDivisionHead, isZBM, isRBM, isAreaBusinessManager } from "../../utils/roleUtils";
 
 function ProfileAvthar({ user, setTab }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,12 +18,6 @@ function ProfileAvthar({ user, setTab }) {
 
   const actualUser = user?.user || user || {};
   const userName = actualUser.name || actualUser.user?.name || user?.name || "";
-  const userIsAdmin = isAdmin(actualUser);
-  const userIsDivisionHead = isDivisionHead(actualUser);
-  const userIsZBM = isZBM(actualUser);
-  const userIsRBM = isRBM(actualUser);
-  const userIsABM = isAreaBusinessManager(actualUser);
-  const showStoreOption = userIsAdmin || userIsDivisionHead || userIsZBM || userIsRBM || userIsABM;
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -77,45 +70,6 @@ function ProfileAvthar({ user, setTab }) {
                 </p>
               </div>
             </Link>
-
-            {showStoreOption && (
-              <div onClick={() => navigate("/store-selector")}>
-                <p>
-                  <span>
-                    <svg
-                      width="37"
-                      height="37"
-                      viewBox="0 0 37 37"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M6.5 12.3333L10.3333 2H26.6667L30.5 12.3333"
-                        stroke="black"
-                        strokeWidth="3.33333"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M5.16675 12.3332H31.8334V31.1665C31.8334 32.8173 30.4842 34.1665 28.8334 34.1665H8.16675C6.51592 34.1665 5.16675 32.8173 5.16675 31.1665V12.3332Z"
-                        stroke="black"
-                        strokeWidth="3.33333"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M21.5835 17.25H26.5002"
-                        stroke="black"
-                        strokeWidth="3.33333"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                  Store
-                </p>
-              </div>
-            )}
 
             <div onClick={() => setIsModalOpen(true)}>
               <p>
