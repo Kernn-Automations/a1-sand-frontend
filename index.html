@@ -4,11 +4,119 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/acm-logo.png" />
     <link rel="apple-touch-icon" href="/acm-logo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#ea580c" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Anjali Constructions and Materials</title>
+    <style>
+      /* Immediate mobile app-like splash loader before React mounts */
+      .app-splash-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        z-index: 999999;
+      }
+      .app-splash-ring {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .app-splash-spin {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        border-top-color: #ea580c;
+        border-right-color: #f97316;
+        animation: splashSpin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+      }
+      .app-splash-inner {
+        position: absolute;
+        inset: 7px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-bottom-color: #0f172a;
+        animation: splashSpin 0.75s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite reverse;
+      }
+      .app-splash-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        box-shadow: 0 3px 10px rgba(234, 88, 12, 0.4);
+      }
+      .app-splash-title {
+        margin-top: 18px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        color: #0f172a;
+        text-transform: uppercase;
+      }
+      .app-splash-sub {
+        font-size: 11px;
+        font-weight: 500;
+        color: #64748b;
+        margin-top: 3px;
+      }
+      .app-splash-bar {
+        margin-top: 14px;
+        width: 130px;
+        height: 3px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+      }
+      .app-splash-bar-inner {
+        position: absolute;
+        inset: 0;
+        width: 50%;
+        background: linear-gradient(90deg, #ea580c 0%, #f97316 100%);
+        border-radius: 999px;
+        animation: splashSweep 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      @keyframes splashSpin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes splashSweep {
+        0% { left: -50%; }
+        100% { left: 100%; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="app-splash-loader">
+        <div class="app-splash-ring">
+          <div class="app-splash-spin"></div>
+          <div class="app-splash-inner"></div>
+          <div class="app-splash-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16.5 9.4 7.55 4.24a1.78 1.78 0 0 0-2.5 1.55v12.42a1.78 1.78 0 0 0 2.5 1.55L16.5 14.6a1.78 1.78 0 0 0 0-3.2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="app-splash-title">Anjali Constructions & Materials</div>
+        <div class="app-splash-sub">Dispatch & Yard Hub</div>
+        <div class="app-splash-bar">
+          <div class="app-splash-bar-inner"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

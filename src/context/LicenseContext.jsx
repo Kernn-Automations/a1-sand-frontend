@@ -94,20 +94,22 @@ export const LicenseCreationBanner = ({ actionName = "record" }) => {
         alignItems: "center",
         justifyContent: "space-between",
         flexWrap: "wrap",
-        gap: "12px",
-        padding: "12px 18px",
+        gap: "10px",
+        padding: "10px 14px",
         background: "#fef2f2",
         border: "1.5px solid #f87171",
         borderRadius: "10px",
-        marginBottom: "20px",
+        marginBottom: "16px",
         boxShadow: "0 2px 4px rgba(220, 38, 38, 0.08)",
+        boxSizing: "border-box",
+        width: "100%",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: "260px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "220px" }}>
         <div
           style={{
-            width: "36px",
-            height: "36px",
+            width: "32px",
+            height: "32px",
             borderRadius: "50%",
             background: "#fee2e2",
             display: "flex",
@@ -117,14 +119,14 @@ export const LicenseCreationBanner = ({ actionName = "record" }) => {
             flexShrink: 0,
           }}
         >
-          <FaLock size={16} />
+          <FaLock size={14} />
         </div>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: "14px", color: "#991b1b" }}>
-            Creation Disabled: No Active Software License
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: "13px", color: "#991b1b" }}>
+            Creation Disabled: No Active License
           </div>
-          <div style={{ fontSize: "12.5px", color: "#b91c1c", marginTop: "2px" }}>
-            Creating {actionName} is currently disabled. Subscribing or activating a license is required to create new records.
+          <div style={{ fontSize: "11.5px", color: "#b91c1c", marginTop: "1px" }}>
+            Creating {actionName} requires an active software subscription.
           </div>
         </div>
       </div>
@@ -133,17 +135,18 @@ export const LicenseCreationBanner = ({ actionName = "record" }) => {
         type="button"
         onClick={() => navigate("/settings/license")}
         style={{
-          padding: "8px 18px",
+          padding: "7px 14px",
           background: "#dc2626",
           color: "#ffffff",
           border: "none",
           borderRadius: "8px",
           fontWeight: 700,
-          fontSize: "12.5px",
+          fontSize: "12px",
           cursor: "pointer",
           whiteSpace: "nowrap",
           boxShadow: "0 2px 6px rgba(220, 38, 38, 0.3)",
           transition: "background 0.2s",
+          touchAction: "manipulation",
         }}
         onMouseEnter={(e) => (e.currentTarget.style.background = "#b91c1c")}
         onMouseLeave={(e) => (e.currentTarget.style.background = "#dc2626")}

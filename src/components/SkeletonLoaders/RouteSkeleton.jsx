@@ -1,20 +1,22 @@
-import { Skeleton } from "../ui/skeleton";
+import React from "react";
+import GlobalLoader from "../Common/GlobalLoader";
 
-function RouteSkeleton() {
+export default function RouteSkeleton() {
   return (
-    <div className="row m-0 p-3">
-      <div className="col-2 mx-3">
-        <Skeleton height={10} />
-      </div>
-      <div className="col-2 mx-3">
-        <Skeleton height={10} />
-      </div>
-      <div className="col-2 mx-3">
-        <Skeleton height={10} />
-      </div>
-      
+    <div
+      style={{
+        minHeight: "50vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "100%",
+        padding: "24px 16px",
+      }}
+    >
+      <GlobalLoader
+        message="Loading Operations..."
+        subtext="Anjali Constructions & Materials"
+      />
     </div>
   );
 }
-
-export default RouteSkeleton;

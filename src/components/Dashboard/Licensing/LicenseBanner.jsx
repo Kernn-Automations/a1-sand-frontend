@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { AlertTriangle, ShieldAlert, ArrowRight, X, CreditCard } from "lucide-react";
 
+import styles from "./LicenseBanner.module.css";
+
 export default function LicenseBanner({ onOpenModal }) {
   const [license, setLicense] = useState(null);
   const [dismissed, setDismissed] = useState(false);
@@ -66,71 +68,24 @@ export default function LicenseBanner({ onOpenModal }) {
   // Red theme for expired / unlicensed state
   if (isNoActiveLicense) {
     return (
-      <aside
-        aria-label="Software License Alert"
-        style={{
-          background: "linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)",
-          color: "#ffffff",
-          padding: "10px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-          fontSize: "13px",
-          fontWeight: 600,
-          position: "sticky",
-          top: 0,
-          zIndex: 110,
-          boxShadow: "0 4px 14px rgba(220, 38, 38, 0.35)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
-          <ShieldAlert size={20} color="#ffffff" style={{ flexShrink: 0 }} />
-          <div style={{ minWidth: 0 }}>
-            <span
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.22)",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                fontWeight: 800,
-                fontSize: "11px",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-                marginRight: 8,
-                display: "inline-block",
-              }}
-            >
-              [NO ACTIVE LICENSE]
+      <aside aria-label="Software License Alert" className={styles.banner}>
+        <div className={styles.contentGroup} onClick={handleActionClick} style={{ cursor: "pointer" }}>
+          <ShieldAlert size={19} color="#ffffff" className={styles.icon} />
+          <div className={styles.textWrapper}>
+            <span className={styles.badge}>
+              [UNLICENSED]
             </span>
-            <span style={{ opacity: 0.95 }}>
-              {license.reason ||
-                "Your software license is expired or not activated. Purchase or activate an enterprise license to prevent operational disruptions."}
+            <span className={styles.message}>
+              {license.reason || "Subscription inactive. Activate license to create & dispatch orders."}
             </span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
-          <button
-            onClick={handleActionClick}
-            style={{
-              backgroundColor: "#ffffff",
-              color: "#dc2626",
-              border: "none",
-              borderRadius: "8px",
-              padding: "7px 16px",
-              fontSize: "12.5px",
-              fontWeight: 800,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-              transition: "transform 0.15s ease, box-shadow 0.15s ease",
-            }}
-          >
-            <CreditCard size={15} color="#dc2626" />
-            <span>Buy Software License</span>
-            <ArrowRight size={14} color="#dc2626" />
+        <div className={styles.actionGroup}>
+          <button onClick={handleActionClick} className={styles.actionBtn}>
+            <CreditCard size={14} color="#dc2626" />
+            <span>Buy License</span>
+            <ArrowRight size={13} color="#dc2626" />
           </button>
         </div>
       </aside>
@@ -141,89 +96,45 @@ export default function LicenseBanner({ onOpenModal }) {
   return (
     <aside
       aria-label="Software License Notice"
-      style={{
-        backgroundColor: isUrgent ? "#fef2f2" : "#fffbeb",
-        borderBottom: `2px solid ${isUrgent ? "#ef4444" : "#f59e0b"}`,
-        color: isUrgent ? "#991b1b" : "#92400e",
-        padding: "10px 18px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "12px",
-        fontSize: "13px",
-        fontWeight: 600,
-        position: "sticky",
-        top: 0,
-        zIndex: 110,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      }}
+      className={`${styles.warningBanner} ${isUrgent ? styles.urgent : ""}`}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+      <div className={styles.contentGroup} onClick={handleActionClick} style={{ cursor: "pointer" }}>
         {isUrgent ? (
-          <ShieldAlert size={20} color="#dc2626" style={{ flexShrink: 0 }} />
+          <ShieldAlert size={19} color="#dc2626" className={styles.icon} />
         ) : (
-          <AlertTriangle size={20} color="#d97706" style={{ flexShrink: 0 }} />
+          <AlertTriangle size={19} color="#d97706" className={styles.icon} />
         )}
-        <div style={{ minWidth: 0 }}>
-          <span
-            style={{
-              fontWeight: 800,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              marginRight: 6,
-            }}
-          >
+        <div className={styles.textWrapper}>
+          <span className={styles.warningBadge}>
             {isSoftLocked
-              ? "[READ-ONLY MODE: LICENSE EXPIRED]"
+              ? "[EXPIRED]"
               : isInGrace
-              ? "[GRACE PERIOD ACTIVE]"
-              : "[LICENSE NOTICE]"}
+              ? "[GRACE PERIOD]"
+              : "[NOTICE]"}
           </span>
-          <span>
+          <span className={styles.message}>
             {license.activeReminder?.message ||
-              `System license expires in ${license.daysRemaining} days. Renew now to prevent workflow interruption.`}
+              `License expires in ${license.daysRemaining} days. Renew now to avoid lock.`}
           </span>
         </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+      <div className={styles.actionGroup}>
         <button
           onClick={handleActionClick}
-          style={{
-            backgroundColor: isUrgent ? "#dc2626" : "#d97706",
-            color: "#ffffff",
-            border: "none",
-            borderRadius: "6px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-            transition: "all 0.15s ease",
-          }}
+          className={`${styles.warningBtn} ${isUrgent ? styles.urgentBtn : ""}`}
         >
           <span>Renew License</span>
-          <ArrowRight size={14} />
+          <ArrowRight size={13} />
         </button>
 
         {!isUrgent && (
           <button
             onClick={() => setDismissed(true)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#92400e",
-              cursor: "pointer",
-              padding: "4px",
-              display: "flex",
-              alignItems: "center",
-            }}
+            className={styles.dismissBtn}
             aria-label="Dismiss banner"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         )}
       </div>

@@ -42,17 +42,52 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Poppins;
+  font-family: Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
+
 body {
   min-height: 100vh;
-  max-height: auto;
   background-color: white !important;
+  overscroll-behavior-y: contain;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
 #root {
   min-height: 100vh;
   background: white;
 }
+
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Mobile App Layout & Modal Safeguards */
+@media (max-width: 768px) {
+  /* Prevent horizontal scroll bleed on mobile */
+  body, #root {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Bootstrap modal mobile bounds */
+  .modal-dialog {
+    margin: 0.5rem !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+
+  .modal-content {
+    border-radius: 16px !important;
+    overflow: hidden;
+  }
+
+  /* Safe padding for fixed bottom navigation bar */
+  .mobile-page-container {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
 html {
   color-scheme: light !important;
   --chakra-colors-bg: white;

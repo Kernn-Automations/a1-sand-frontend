@@ -119,70 +119,106 @@ const PDFPreviewModal = ({
         <div
           style={{
             position: "fixed",
-            top: "5vh",
-            left: "5vw",
-            width: "90vw",
-            height: "90vh",
-            backgroundColor: "rgba(0,0,0,0.7)",
-            zIndex: 9999,
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.8)",
+            backdropFilter: "blur(6px)",
+            zIndex: 99999,
             display: "flex",
-            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "10px",
+            boxSizing: "border-box",
           }}
+          onClick={() => setOpen(false)}
         >
-          {/* Header */}
           <div
             style={{
+              width: "100%",
+              maxWidth: "960px",
+              height: "90vh",
+              maxHeight: "92vh",
+              backgroundColor: "#ffffff",
+              borderRadius: "16px",
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "1rem",
-              backgroundColor: "transparent",
+              flexDirection: "column",
+              overflow: "hidden",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4)",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <h5 style={{ margin: 0, color: "white"}}>PDF Preview</h5>
-            <div>
-              <button className="text-white" onClick={() => setOpen(false)}>
-                <i class="bi bi-x-lg"></i>
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div style={{ flex: 1, overflow: "hidden", backgroundColor: "#f0f0f0" }}>
-            {loading ? (
-              <p style={{ padding: "1rem", color: "#000" }}>Loading PDF...</p>
-            ) : blobUrl ? (
-              <iframe
-                src={blobUrl}
-                title="PDF Preview"
-                width="100%"
-                height="100%"
-                style={{ border: "none" }}
-              />
-            ) : error ? (
-              <div style={{ padding: "1rem", textAlign: "center" }}>
-                <p style={{ color: "red", marginBottom: "1rem" }}>{error}</p>
-                <button 
-                  className="submitbtn" 
-                  onClick={() => setOpen(false)}
-                  style={{ marginRight: "0.5rem" }}
-                >
-                  Close
-                </button>
-                <button 
-                  className="submitbtn" 
-                  onClick={() => {
-                    setError(null);
-                    setBlobUrl(null);
-                    fetchPDF();
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "12px 18px",
+                backgroundColor: "#0f172a",
+                color: "#ffffff",
+              }}
+            >
+              <h5 style={{ margin: 0, color: "#ffffff", fontSize: "15px", fontWeight: 700 }}>PDF Document Preview</h5>
+              <div>
+                <button
+                  style={{
+                    background: "rgba(255, 255, 255, 0.15)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "30px",
+                    height: "30px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#ffffff",
+                    cursor: "pointer",
                   }}
+                  onClick={() => setOpen(false)}
+                  aria-label="Close"
                 >
-                  Retry
+                  <i className="bi bi-x-lg" style={{ fontSize: "13px" }}></i>
                 </button>
               </div>
-            ) : (
-              <p style={{ color: "red", padding: "1rem" }}>Unable to load PDF</p>
-            )}
+            </div>
+
+            {/* Content */}
+            <div style={{ flex: 1, overflow: "hidden", backgroundColor: "#f8fafc" }}>
+              {loading ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <p style={{ padding: "1rem", color: "#64748b", fontWeight: 600 }}>Loading PDF...</p>
+                </div>
+              ) : blobUrl ? (
+                <iframe
+                  src={blobUrl}
+                  title="PDF Preview"
+                  width="100%"
+                  height="100%"
+                  style={{ border: "none" }}
+                />
+              ) : error ? (
+                <div style={{ padding: "2rem", textAlign: "center" }}>
+                  <p style={{ color: "#dc2626", marginBottom: "1rem", fontWeight: 600 }}>{error}</p>
+                  <button 
+                    className="submitbtn" 
+                    onClick={() => setOpen(false)}
+                    style={{ marginRight: "0.5rem" }}
+                  >
+                    Close
+                  </button>
+                  <button 
+                    className="submitbtn" 
+                    onClick={() => {
+                      setError(null);
+                      setBlobUrl(null);
+                      fetchPDF();
+                    }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                <p style={{ color: "#dc2626", padding: "1rem" }}>Unable to load PDF</p>
+              )}
+            </div>
           </div>
         </div>
       )}
