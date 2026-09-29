@@ -61,6 +61,7 @@ export default function LicenseSettingsPage() {
 
   // State
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [license, setLicense] = useState(null);
   const [plans, setPlans] = useState([]);
   const [employeeSeats, setEmployeeSeats] = useState({ total: 50, assigned: 0, available: 50 });
@@ -139,18 +140,21 @@ export default function LicenseSettingsPage() {
 
         if (!isMounted) return;
 
+        const remoteStatus = (pollRes.data?.status || "").toLowerCase();
+
         setCheckoutSession((prev) => {
           if (!prev) return null;
-          return {
-            ...prev,
-            checkCount: (prev.checkCount || 0) + 1,
-          };
+          return { ...prev, checkCount: (prev.checkCount || 0) + 1 };
         });
 
-        if (pollRes.data?.isPaid || pollRes.data?.status === "paid") {
+        if (pollRes.data?.isPaid || remoteStatus === "paid") {
           setCheckoutSession((prev) => (prev ? { ...prev, status: "paid" } : null));
           clearInterval(interval);
-          loadAllLicenseData();
+          refreshLicenseData();
+        } else if (remoteStatus === "cancelled" || remoteStatus === "failed" || remoteStatus === "expired") {
+          // Terminal failure: stop polling and show cancelled state
+          setCheckoutSession((prev) => (prev ? { ...prev, status: remoteStatus } : null));
+          clearInterval(interval);
         }
       } catch (err) {
         console.warn("[CheckoutWebhook] Error polling webhook status:", err.message);
@@ -171,18 +175,15 @@ export default function LicenseSettingsPage() {
       const pollRes = await axios.get(
         `${API_URL}/api/licensing/invoices/${checkoutSession.invoiceId}/status`
       );
-      if (pollRes.data?.isPaid || pollRes.data?.status === "paid") {
+      const remoteStatus = (pollRes.data?.status || "").toLowerCase();
+      if (pollRes.data?.isPaid || remoteStatus === "paid") {
         setCheckoutSession((prev) => (prev ? { ...prev, status: "paid", checkingManual: false } : null));
-        await loadAllLicenseData();
+        await refreshLicenseData();
+      } else if (remoteStatus === "cancelled" || remoteStatus === "failed" || remoteStatus === "expired") {
+        setCheckoutSession((prev) => (prev ? { ...prev, status: remoteStatus, checkingManual: false } : null));
       } else {
         setCheckoutSession((prev) =>
-          prev
-            ? {
-                ...prev,
-                checkCount: (prev.checkCount || 0) + 1,
-                checkingManual: false,
-              }
-            : null
+          prev ? { ...prev, checkCount: (prev.checkCount || 0) + 1, checkingManual: false } : null
         );
       }
     } catch (e) {
@@ -193,40 +194,51 @@ export default function LicenseSettingsPage() {
   const loadAllLicenseData = async () => {
     try {
       setLoading(true);
-
-      const [statusRes, plansRes, seatsRes, invoicesRes] = await Promise.allSettled([
-        axios.get(`${API_URL}/license/status`, { headers: authHeaders }),
-        axios.get(`${API_URL}/license/plans`, { headers: authHeaders }),
-        axios.get(`${API_URL}/license/employees`, { headers: authHeaders }),
-        axios.get(`${API_URL}/api/licensing/invoices`, { headers: authHeaders }),
-      ]);
-
-      if (statusRes.status === "fulfilled" && statusRes.value.data?.success) {
-        const d = statusRes.value.data.data;
-        setLicense(d);
-        if (d.seats) setEmployeeSeats(d.seats);
-      }
-
-      if (plansRes.status === "fulfilled" && plansRes.value.data?.success) {
-        setPlans(plansRes.value.data.plans || []);
-      }
-
-      if (seatsRes.status === "fulfilled" && seatsRes.value.data?.success) {
-        setEmployeeSeats(seatsRes.value.data.seats || { total: 50, assigned: 0, available: 50 });
-        setEmployeesList(seatsRes.value.data.employees || []);
-      }
-
-      if (invoicesRes.status === "fulfilled" && invoicesRes.value.data?.success) {
-        setTaxInvoices(invoicesRes.value.data.invoices || []);
-      }
-
-      if (isSuperAdminUser) {
-        loadSuperAdminData();
-      }
-    } catch (err) {
-      console.error("Error loading license data:", err);
+      await _fetchLicenseData();
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Background refresh — does NOT show the full-page spinner
+  const refreshLicenseData = async () => {
+    try {
+      setRefreshing(true);
+      await _fetchLicenseData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const _fetchLicenseData = async () => {
+    const [statusRes, plansRes, seatsRes, invoicesRes] = await Promise.allSettled([
+      axios.get(`${API_URL}/license/status`, { headers: authHeaders }),
+      axios.get(`${API_URL}/license/plans`, { headers: authHeaders }),
+      axios.get(`${API_URL}/license/employees`, { headers: authHeaders }),
+      axios.get(`${API_URL}/api/licensing/invoices`, { headers: authHeaders }),
+    ]);
+
+    if (statusRes.status === "fulfilled" && statusRes.value.data?.success) {
+      const d = statusRes.value.data.data;
+      setLicense(d);
+      if (d.seats) setEmployeeSeats(d.seats);
+    }
+
+    if (plansRes.status === "fulfilled" && plansRes.value.data?.success) {
+      setPlans(plansRes.value.data.plans || []);
+    }
+
+    if (seatsRes.status === "fulfilled" && seatsRes.value.data?.success) {
+      setEmployeeSeats(seatsRes.value.data.seats || { total: 50, assigned: 0, available: 50 });
+      setEmployeesList(seatsRes.value.data.employees || []);
+    }
+
+    if (invoicesRes.status === "fulfilled" && invoicesRes.value.data?.success) {
+      setTaxInvoices(invoicesRes.value.data.invoices || []);
+    }
+
+    if (isSuperAdminUser) {
+      loadSuperAdminData();
     }
   };
 
@@ -377,7 +389,7 @@ export default function LicenseSettingsPage() {
       );
       if (res.data?.success) {
         setStatusMessage({ type: "success", text: "Staff seat assigned successfully." });
-        await loadAllLicenseData();
+        await refreshLicenseData();
       }
     } catch (err) {
       setStatusMessage({
@@ -400,7 +412,7 @@ export default function LicenseSettingsPage() {
       );
       if (res.data?.success) {
         setStatusMessage({ type: "success", text: "Staff seat removed." });
-        await loadAllLicenseData();
+        await refreshLicenseData();
       }
     } catch (err) {
       setStatusMessage({
@@ -424,7 +436,7 @@ export default function LicenseSettingsPage() {
       );
       if (res.data?.success) {
         setStatusMessage({ type: "success", text: res.data.message || "Central Payment Server connected successfully!" });
-        await loadSuperAdminData();
+        loadSuperAdminData();
       }
     } catch (err) {
       const errData = err.response?.data;
@@ -432,7 +444,7 @@ export default function LicenseSettingsPage() {
       const needsConfig = Boolean(errData?.requiresReconfigure) || err.response?.status === 401;
       setRequiresReconfigure(needsConfig);
       setStatusMessage({ type: "error", text: msg });
-      await loadSuperAdminData();
+      loadSuperAdminData();
     } finally {
       setConnectingHandshake(false);
     }
@@ -585,7 +597,7 @@ export default function LicenseSettingsPage() {
       );
       if (res.data?.success) {
         setStatusMessage({ type: "success", text: "License activated directly for organization!" });
-        await loadAllLicenseData();
+        await refreshLicenseData();
       }
     } catch (err) {
       setStatusMessage({
@@ -620,6 +632,29 @@ export default function LicenseSettingsPage() {
 
   return (
     <div className="lic-container">
+      {/* Subtle background refresh indicator */}
+      {refreshing && (
+        <div style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          background: "#0f172a",
+          color: "#fff",
+          padding: "8px 14px",
+          borderRadius: "8px",
+          fontSize: "12px",
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          zIndex: 99998,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          animation: "fadein 0.2s ease",
+        }}>
+          <RefreshCw size={13} className="lic-spinning-loader" />
+          Refreshing...
+        </div>
+      )}
       {/* Top Header */}
       <div className="lic-header">
         <div className="lic-header-left">
@@ -1065,6 +1100,8 @@ export default function LicenseSettingsPage() {
                         const statusUpper = (inv.status || "PENDING").toUpperCase();
                         const isPaid = statusUpper === "PAID";
                         const isPending = statusUpper === "PENDING" || statusUpper === "INITIATED";
+                        const isCancelled = statusUpper === "CANCELLED";
+                        const isFailed = statusUpper === "FAILED";
 
                         return (
                           <tr key={inv.id || inv.invoiceNumber}>
@@ -1103,7 +1140,7 @@ export default function LicenseSettingsPage() {
                                 >
                                   ● INITIATED
                                 </span>
-                              ) : statusUpper === "FAILED" ? (
+                              ) : isFailed ? (
                                 <span
                                   style={{
                                     backgroundColor: "#fee2e2",
@@ -1115,6 +1152,19 @@ export default function LicenseSettingsPage() {
                                   }}
                                 >
                                   ● FAILED
+                                </span>
+                              ) : isCancelled ? (
+                                <span
+                                  style={{
+                                    backgroundColor: "#f1f5f9",
+                                    color: "#64748b",
+                                    padding: "3px 8px",
+                                    borderRadius: "9999px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ● CANCELLED
                                 </span>
                               ) : (
                                 <span
@@ -1722,19 +1772,19 @@ export default function LicenseSettingsPage() {
                     width: "36px",
                     height: "36px",
                     borderRadius: "10px",
-                    background: checkoutSession.status === "paid" ? "#10b981" : "#fff7ed",
-                    border: checkoutSession.status === "paid" ? "none" : "1px solid #fed7aa",
+                    background: checkoutSession.status === "paid" ? "#10b981" : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? "#fee2e2" : "#fff7ed",
+                    border: checkoutSession.status === "paid" ? "none" : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? "1px solid #fca5a5" : "1px solid #fed7aa",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: checkoutSession.status === "paid" ? "#fff" : "#ea580c",
+                    color: checkoutSession.status === "paid" ? "#fff" : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? "#dc2626" : "#ea580c",
                   }}
                 >
-                  {checkoutSession.status === "paid" ? <CheckCircle2 size={20} /> : <CreditCard size={18} />}
+                  {checkoutSession.status === "paid" ? <CheckCircle2 size={20} /> : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? <X size={18} /> : <CreditCard size={18} />}
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>
-                    {checkoutSession.status === "paid" ? "Payment Confirmed" : "Secure Payment Checkout"}
+                    {checkoutSession.status === "paid" ? "Payment Confirmed" : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? "Payment Cancelled" : "Secure Payment Checkout"}
                   </h3>
                   <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
                     Order #{checkoutSession.invoiceNumber || checkoutSession.invoiceId}
@@ -1811,6 +1861,49 @@ export default function LicenseSettingsPage() {
                     </div>
                   </div>
                 </div>
+              ) : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? (
+                <div style={{ padding: "10px 0" }}>
+                  <div
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      backgroundColor: "#fee2e2",
+                      border: "2px solid #fca5a5",
+                      color: "#dc2626",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 16px auto",
+                    }}
+                  >
+                    <X size={32} />
+                  </div>
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                    {checkoutSession.status === "failed" ? "Payment Failed" : "Payment Cancelled"}
+                  </h4>
+                  <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b", lineHeight: 1.5 }}>
+                    {checkoutSession.status === "failed"
+                      ? "Your payment could not be processed. Please try again or contact support."
+                      : "The payment was cancelled. You can try a new payment from the Subscription Plans tab."}
+                  </p>
+                  <div style={{
+                    background: "#fff5f5",
+                    border: "1px solid #fecaca",
+                    borderRadius: "12px",
+                    padding: "14px 16px",
+                    textAlign: "left",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Subscription Plan</span>
+                      <strong style={{ color: "#0f172a" }}>{checkoutSession.planName}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Order #</span>
+                      <strong style={{ color: "#0f172a", fontFamily: "monospace" }}>{checkoutSession.invoiceNumber || checkoutSession.invoiceId}</strong>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div>
                   {/* Modern Sleek Spinner with Centered Card Icon */}
@@ -1864,7 +1957,7 @@ export default function LicenseSettingsPage() {
             <div style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: checkoutSession.status === "paid" ? "center" : "space-between",
+              justifyContent: (checkoutSession.status === "paid" || checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? "center" : "space-between",
               padding: "14px 20px",
               background: "#f8fafc",
               borderTop: "1px solid #f1f5f9"
@@ -1877,6 +1970,15 @@ export default function LicenseSettingsPage() {
                   onClick={() => setCheckoutSession(null)}
                 >
                   Continue to ERP Dashboard
+                </button>
+              ) : (checkoutSession.status === "cancelled" || checkoutSession.status === "failed") ? (
+                <button
+                  type="button"
+                  className="lic-btn-primary"
+                  style={{ width: "100%", padding: "10px", fontSize: "14px", fontWeight: 600, background: "#64748b", boxShadow: "none" }}
+                  onClick={() => setCheckoutSession(null)}
+                >
+                  Close
                 </button>
               ) : (
                 <>
