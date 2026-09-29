@@ -676,3 +676,22 @@
     transform: translateY(0) scale(1);
   }
 }
+
+@media (max-width: 768px) {
+  .longformmdl,
+  .location,
+  .longformmdl2 {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .longformmdl label,
+  .textform label,
+  .longformmdl2 label {
+    width: 100% !important;
+    text-align: left !important;
+    padding-right: 0 !important;
+    margin-bottom: 4px;
+  }
+}

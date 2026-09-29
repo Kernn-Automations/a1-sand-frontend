@@ -473,10 +473,13 @@ export default function Quotations() {
 
 const styles = {
   container: {
-    padding: '16px 20px 80px',
+    padding: '12px 6px 80px',
     maxWidth: '1280px',
     margin: '0 auto',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+    width: '100%',
+    overflowX: 'hidden',
   },
   topBar: {
     display: 'flex',
@@ -485,6 +488,8 @@ const styles = {
     marginBottom: '18px',
     flexWrap: 'wrap',
     gap: '12px',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   title: {
     fontSize: '20px',
@@ -562,9 +567,11 @@ const styles = {
   },
   metricsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '12px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
+    gap: '10px',
     marginBottom: '18px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   metricCard: {
     backgroundColor: '#ffffff',
@@ -632,8 +639,10 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-    gap: '16px',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+    gap: '14px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -644,6 +653,8 @@ const styles = {
     flexDirection: 'column',
     boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
     transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   cardHeader: {
     display: 'flex',

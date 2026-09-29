@@ -20,6 +20,9 @@ import {
   ChevronRight,
   Sparkles,
   Lock,
+  Link2,
+  Unlink,
+  Sliders,
 } from "lucide-react";
 import "./LicenseSettingsPage.css";
 
@@ -76,6 +79,16 @@ export default function LicenseSettingsPage() {
   const [allPackages, setAllPackages] = useState([]);
   const [handshakeStatus, setHandshakeStatus] = useState(null);
   const [testingHandshake, setTestingHandshake] = useState(false);
+  const [connectingHandshake, setConnectingHandshake] = useState(false);
+  const [disconnectingHandshake, setDisconnectingHandshake] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [manualConfigForm, setManualConfigForm] = useState({
+    apiKey: "",
+    webhookSecret: "",
+    callbackUrl: "",
+    orchestratorUrl: "",
+  });
+  const [savingManualConfig, setSavingManualConfig] = useState(false);
   const [showAddPackageModal, setShowAddPackageModal] = useState(false);
   const [packageFormData, setPackageFormData] = useState({
     package_code: "",
@@ -272,8 +285,58 @@ export default function LicenseSettingsPage() {
     }
   };
 
-  // Super Admin: Test Handshake
-  const handleTestHandshake = async () => {
+  // Super Admin: Connect Server (Initiate Handshake)
+  const handleConnectHandshake = async () => {
+    try {
+      setConnectingHandshake(true);
+      const res = await axios.post(
+        `${API_URL}/api/licensing/handshake/initiate`,
+        { forceOnboard: true },
+        { headers: authHeaders }
+      );
+      if (res.data?.success) {
+        setStatusMessage({ type: "success", text: res.data.message || "Central Payment Server connected successfully!" });
+        await loadSuperAdminData();
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: "error",
+        text: err.response?.data?.message || err.response?.data?.error || "Server connection failed.",
+      });
+      await loadSuperAdminData();
+    } finally {
+      setConnectingHandshake(false);
+    }
+  };
+
+  // Super Admin: Disconnect Server
+  const handleDisconnectHandshake = async () => {
+    if (!window.confirm("Are you sure you want to disconnect from the Central Payment Server? Payment processing will be paused until reconnected.")) {
+      return;
+    }
+    try {
+      setDisconnectingHandshake(true);
+      const res = await axios.post(
+        `${API_URL}/api/licensing/handshake/disconnect`,
+        {},
+        { headers: authHeaders }
+      );
+      if (res.data?.success) {
+        setStatusMessage({ type: "success", text: res.data.message || "Payment server disconnected successfully." });
+        await loadSuperAdminData();
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: "error",
+        text: err.response?.data?.message || err.response?.data?.error || "Disconnect failed.",
+      });
+    } finally {
+      setDisconnectingHandshake(false);
+    }
+  };
+
+  // Super Admin: Refresh Connection (Keep Handshake Alive)
+  const handleRefreshHandshake = async () => {
     try {
       setTestingHandshake(true);
       const res = await axios.post(
@@ -282,18 +345,62 @@ export default function LicenseSettingsPage() {
         { headers: authHeaders }
       );
       if (res.data?.success) {
-        setStatusMessage({ type: "success", text: "Central Payment Server connection verified successfully!" });
-        loadSuperAdminData();
+        setStatusMessage({ type: "success", text: res.data.message || "Handshake verified and connection kept alive!" });
+        await loadSuperAdminData();
       }
     } catch (err) {
       setStatusMessage({
         type: "error",
-        text: err.response?.data?.message || "Central server connection failed.",
+        text: err.response?.data?.message || err.response?.data?.error || "Connection refresh check failed.",
       });
+      await loadSuperAdminData();
     } finally {
       setTestingHandshake(false);
     }
   };
+
+  // Super Admin: Open Manual Config Modal
+  const handleOpenConfigModal = () => {
+    setManualConfigForm({
+      apiKey: "",
+      webhookSecret: "",
+      callbackUrl: handshakeStatus?.callbackUrl || `${API_URL}/licensing/payment-success`,
+      orchestratorUrl: handshakeStatus?.orchestratorUrl || "https://payments.kernn.ai",
+    });
+    setShowConfigModal(true);
+  };
+
+  // Super Admin: Save Manual Configuration
+  const handleSaveManualConfig = async (e) => {
+    e.preventDefault();
+    if (!manualConfigForm.apiKey.trim()) {
+      setStatusMessage({ type: "error", text: "API Key cannot be empty." });
+      return;
+    }
+    try {
+      setSavingManualConfig(true);
+      const res = await axios.post(
+        `${API_URL}/api/licensing/handshake/credentials`,
+        manualConfigForm,
+        { headers: authHeaders }
+      );
+      if (res.data?.success) {
+        setStatusMessage({ type: "success", text: res.data.message || "Credentials updated and verified!" });
+        setShowConfigModal(false);
+        await loadSuperAdminData();
+      }
+    } catch (err) {
+      setStatusMessage({
+        type: "error",
+        text: err.response?.data?.message || err.response?.data?.error || "Failed to verify and save credentials.",
+      });
+    } finally {
+      setSavingManualConfig(false);
+    }
+  };
+
+  // Super Admin: Test Handshake (Legacy alias)
+  const handleTestHandshake = handleRefreshHandshake;
 
   // Super Admin: Toggle Package
   const handleTogglePackage = async (pkgId) => {
@@ -876,50 +983,187 @@ export default function LicenseSettingsPage() {
           </div>
 
           {/* SUPER ADMIN TAB 1: CONNECTION */}
-          {superAdminTab === "connection" && (
-            <div className="lic-hero-card" style={{ borderLeft: "4px solid #ea580c" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <h3 style={{ margin: "0 0 6px 0", fontSize: "17px", fontWeight: 800 }}>
-                    Central Payment Server Connection
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
-                    Validates automated communication, webhook security seals, and live renewal triggers.
-                  </p>
+          {superAdminTab === "connection" && (() => {
+            const isHandshakeConnected =
+              handshakeStatus?.status === "ACTIVE" &&
+              handshakeStatus?.onboardingStatus === "completed";
+
+            return (
+              <div className="lic-hero-card" style={{ borderLeft: "4px solid #ea580c" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: "0 0 6px 0", fontSize: "17px", fontWeight: 800 }}>
+                      Central Payment Server Connection
+                    </h3>
+                    <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>
+                      Validates automated communication, webhook security seals, and live renewal triggers.
+                    </p>
+                  </div>
+
+                  {/* Handshake Action Buttons */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    {/* Connect Button: Enabled if NOT connected, Disabled if already connected */}
+                    <button
+                      type="button"
+                      disabled={isHandshakeConnected || connectingHandshake}
+                      className={isHandshakeConnected ? "lic-btn-secondary" : "lic-btn-primary"}
+                      style={{
+                        padding: "7px 14px",
+                        fontSize: "13px",
+                        opacity: isHandshakeConnected ? 0.6 : 1,
+                        cursor: isHandshakeConnected ? "not-allowed" : "pointer",
+                        width: "auto",
+                      }}
+                      onClick={handleConnectHandshake}
+                      title={isHandshakeConnected ? "Server is already connected & secured" : "Initiate handshake & connect"}
+                    >
+                      <Link2 size={15} className={connectingHandshake ? "animate-spin" : ""} />
+                      <span>{connectingHandshake ? "Connecting..." : isHandshakeConnected ? "Connected" : "Connect Server"}</span>
+                    </button>
+
+                    {/* Disconnect Button: Enabled if connected, Disabled if not connected */}
+                    <button
+                      type="button"
+                      disabled={!isHandshakeConnected || disconnectingHandshake}
+                      className="lic-btn-outline"
+                      style={{
+                        padding: "7px 14px",
+                        fontSize: "13px",
+                        borderColor: isHandshakeConnected ? "#fca5a5" : "#e2e8f0",
+                        color: isHandshakeConnected ? "#dc2626" : "#94a3b8",
+                        opacity: !isHandshakeConnected ? 0.5 : 1,
+                        cursor: !isHandshakeConnected ? "not-allowed" : "pointer",
+                      }}
+                      onClick={handleDisconnectHandshake}
+                      title={!isHandshakeConnected ? "Server is already disconnected" : "Disconnect handshake & clear credentials"}
+                    >
+                      <Unlink size={15} className={disconnectingHandshake ? "animate-spin" : ""} />
+                      <span>{disconnectingHandshake ? "Disconnecting..." : "Disconnect"}</span>
+                    </button>
+
+                    {/* Refresh / Keep Handshake Alive */}
+                    <button
+                      type="button"
+                      disabled={testingHandshake}
+                      className="lic-btn-outline"
+                      style={{ padding: "7px 14px", fontSize: "13px" }}
+                      onClick={handleRefreshHandshake}
+                      title="Ping payment server and keep connection heartbeat alive"
+                    >
+                      <RefreshCw size={15} className={testingHandshake ? "animate-spin" : ""} />
+                      <span>{testingHandshake ? "Testing..." : "Keep Alive / Refresh"}</span>
+                    </button>
+
+                    {/* Manual Configuration Modal Trigger */}
+                    <button
+                      type="button"
+                      className="lic-btn-outline"
+                      style={{ padding: "7px 14px", fontSize: "13px" }}
+                      onClick={handleOpenConfigModal}
+                      title="Configure gateway URL, API keys, and callback settings manually"
+                    >
+                      <Sliders size={15} />
+                      <span>Configure</span>
+                    </button>
+                  </div>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={testingHandshake}
-                  className="lic-btn-outline"
-                  onClick={handleTestHandshake}
-                >
-                  <RefreshCw size={15} className={testingHandshake ? "animate-spin" : ""} />
-                  <span>{testingHandshake ? "Testing Connection..." : "Test Connection"}</span>
-                </button>
-              </div>
-
-              <div style={{ marginTop: "20px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              {/* Live Connection Metrics */}
+              <div style={{ marginTop: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "16px" }}>
                 <div className="lic-metric-item">
                   <div className="lic-metric-label">Status</div>
-                  <div className="lic-metric-value" style={{ color: "#16a34a" }}>
-                    ● Connected &amp; Secured
+                  <div
+                    className="lic-metric-value"
+                    style={{
+                      color:
+                        handshakeStatus?.status === "ACTIVE" && handshakeStatus?.onboardingStatus === "completed"
+                          ? "#16a34a"
+                          : handshakeStatus?.onboardingStatus === "challenge_issued"
+                          ? "#ea580c"
+                          : "#dc2626",
+                    }}
+                  >
+                    {handshakeStatus?.status === "ACTIVE" && handshakeStatus?.onboardingStatus === "completed"
+                      ? "● Connected & Secured"
+                      : handshakeStatus?.onboardingStatus === "challenge_issued"
+                      ? "● Verification Pending"
+                      : "● Disconnected"}
                   </div>
                   <div className="lic-metric-sub">
-                    Callback: {window.location.origin}/licensing/payment-success
+                    Target: {handshakeStatus?.orchestratorUrl || "https://payments.kernn.ai"}
                   </div>
                 </div>
 
                 <div className="lic-metric-item">
                   <div className="lic-metric-label">Domain Ownership</div>
-                  <div className="lic-metric-value">Verified</div>
+                  <div
+                    className="lic-metric-value"
+                    style={{
+                      color: handshakeStatus?.domainVerified ? "#16a34a" : "#dc2626",
+                    }}
+                  >
+                    {handshakeStatus?.domainVerified ? "Verified (SSL Active)" : "Unverified"}
+                  </div>
+                  <div className="lic-metric-sub" title={handshakeStatus?.domain}>
+                    Domain: {handshakeStatus?.domain || "a1-sand-h6a6hpdwbhb7cja9.southindia-01.azurewebsites.net"}
+                  </div>
+                </div>
+
+                <div className="lic-metric-item">
+                  <div className="lic-metric-label">Payment Organization ID</div>
+                  <div className="lic-metric-value" style={{ fontSize: "13px", fontFamily: "monospace", color: "#0f172a" }}>
+                    {handshakeStatus?.paymentOrganizationId || "Not Registered"}
+                  </div>
                   <div className="lic-metric-sub">
-                    Challenge endpoint active at /.well-known/kernn-verification
+                    Tenant Ref: {handshakeStatus?.organizationId || "anjali_constructions_01"}
+                  </div>
+                </div>
+
+                <div className="lic-metric-item">
+                  <div className="lic-metric-label">Gateway Credentials</div>
+                  <div className="lic-metric-value" style={{ fontSize: "13px", fontFamily: "monospace", color: "#0f172a" }}>
+                    {handshakeStatus?.activeApiKeyPreview || "Not configured"}
+                  </div>
+                  <div className="lic-metric-sub">
+                    {handshakeStatus?.webhookSecretConfigured ? "Webhook Seal: HMAC-SHA256 Active" : "Webhook Seal: Not Set"}
                   </div>
                 </div>
               </div>
+
+              {/* Server Webhook & Challenge Endpoints info */}
+              <div
+                style={{
+                  marginTop: "16px",
+                  padding: "12px 14px",
+                  backgroundColor: "#f8fafc",
+                  borderRadius: "10px",
+                  border: "1px solid #e2e8f0",
+                  fontSize: "12px",
+                  color: "#475569",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div>
+                  <strong>Live Webhook Callback:</strong>{" "}
+                  <code style={{ color: "#ea580c", wordBreak: "break-all" }}>
+                    {handshakeStatus?.callbackUrl || "https://a1-sand-h6a6hpdwbhb7cja9.southindia-01.azurewebsites.net/licensing/payment-success"}
+                  </code>
+                </div>
+                <div>
+                  <strong>Verification Challenge Endpoint:</strong>{" "}
+                  <code style={{ color: "#0284c7" }}>/.well-known/kernn-verification</code>
+                </div>
+                {handshakeStatus?.lastHandshakeAt && (
+                  <div style={{ color: "#64748b", fontSize: "11px", marginTop: "2px" }}>
+                    Last Verified: {new Date(handshakeStatus.lastHandshakeAt).toLocaleString()}
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          );
+        })()}
 
           {/* SUPER ADMIN TAB 2: PACKAGES */}
           {superAdminTab === "packages" && (
@@ -1289,6 +1533,129 @@ export default function LicenseSettingsPage() {
                 </button>
                 <button type="submit" className="lic-btn-primary" style={{ width: "auto" }}>
                   Save Package
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 3: CONFIGURE CREDENTIALS MODAL (SUPER ADMIN ONLY)
+          ========================================================================= */}
+      {showConfigModal && (
+        <div className="lic-modal-overlay" onClick={() => setShowConfigModal(false)}>
+          <div className="lic-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "560px" }}>
+            <div className="lic-modal-header">
+              <div>
+                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>
+                  Manual Gateway Configuration
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>
+                  Configure Central Payment Server URLs and credentials manually.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowConfigModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveManualConfig}>
+              <div className="lic-modal-body" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, marginBottom: "4px" }}>
+                    Central Payment Orchestrator URL:
+                  </label>
+                  <input
+                    type="url"
+                    className="lic-input"
+                    placeholder="https://payments.kernn.ai"
+                    value={manualConfigForm.orchestratorUrl}
+                    onChange={(e) =>
+                      setManualConfigForm({ ...manualConfigForm, orchestratorUrl: e.target.value })
+                    }
+                    required
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    Target host where orders are created and checkout sessions run.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, marginBottom: "4px" }}>
+                    Organization API Key:
+                  </label>
+                  <input
+                    type="password"
+                    className="lic-input"
+                    placeholder="Enter API key issued by Central Payment Server"
+                    value={manualConfigForm.apiKey}
+                    onChange={(e) =>
+                      setManualConfigForm({ ...manualConfigForm, apiKey: e.target.value })
+                    }
+                    required
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    Secret key used in <code>x-api-key</code> headers for authenticated order creation.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, marginBottom: "4px" }}>
+                    HMAC Webhook Secret:
+                  </label>
+                  <input
+                    type="password"
+                    className="lic-input"
+                    placeholder="Enter HMAC-SHA256 signature secret"
+                    value={manualConfigForm.webhookSecret}
+                    onChange={(e) =>
+                      setManualConfigForm({ ...manualConfigForm, webhookSecret: e.target.value })
+                    }
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    Used to verify cryptographically signed callbacks from the payment server.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", fontWeight: 600, marginBottom: "4px" }}>
+                    Server Callback URL:
+                  </label>
+                  <input
+                    type="url"
+                    className="lic-input"
+                    placeholder="https://.../licensing/payment-success"
+                    value={manualConfigForm.callbackUrl}
+                    onChange={(e) =>
+                      setManualConfigForm({ ...manualConfigForm, callbackUrl: e.target.value })
+                    }
+                  />
+                  <span style={{ fontSize: "11px", color: "#64748b" }}>
+                    Endpoint where Central Payment Server delivers payment success webhooks.
+                  </span>
+                </div>
+              </div>
+
+              <div className="lic-modal-footer">
+                <button
+                  type="button"
+                  className="lic-btn-outline"
+                  onClick={() => setShowConfigModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingManualConfig}
+                  className="lic-btn-primary"
+                  style={{ width: "auto" }}
+                >
+                  {savingManualConfig ? "Verifying & Saving..." : "Save & Verify Credentials"}
                 </button>
               </div>
             </form>

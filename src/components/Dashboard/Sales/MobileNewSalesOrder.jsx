@@ -69,6 +69,13 @@ export default function MobileNewSalesOrder() {
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [paymentReference, setPaymentReference] = useState('');
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
   useEffect(() => {
@@ -450,7 +457,7 @@ export default function MobileNewSalesOrder() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmitOrder} style={styles.formContainer}>
+      <form onSubmit={handleSubmitOrder} style={{ ...styles.formContainer, padding: isMobile ? '10px 4px 80px' : '20px' }}>
         <LicenseCreationBanner actionName="sales orders" />
         {errorMsg && (
           <div style={styles.errorBanner}>
@@ -459,7 +466,11 @@ export default function MobileNewSalesOrder() {
           </div>
         )}
 
-        <div style={styles.formGrid}>
+        <div style={{
+          ...styles.formGrid,
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
+          gap: isMobile ? 14 : 20,
+        }}>
           {/* LEFT COLUMN: Customer & Drop-off Location Details */}
           <div style={styles.columnLeft}>
             {/* 1. Customer Card */}
@@ -890,39 +901,52 @@ const styles = {
     backgroundColor: 'transparent',
     minHeight: '100vh',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
   },
   headerBar: {
     display: 'flex',
     alignItems: 'center',
-    padding: '16px 20px',
+    padding: '14px 16px',
     backgroundColor: '#ffffff',
     borderBottom: '1px solid #e2e8f0',
     borderRadius: '12px 12px 0 0',
     position: 'sticky',
     top: 0,
     zIndex: 100,
+    boxSizing: 'border-box',
   },
   formContainer: {
-    padding: '20px',
+    padding: '16px',
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
+    boxSizing: 'border-box',
+    width: '100%',
   },
   formGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))',
     gap: 20,
     alignItems: 'start',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   columnLeft: {
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
+    width: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
   },
   columnRight: {
     display: 'flex',
     flexDirection: 'column',
     gap: 16,
+    width: '100%',
+    minWidth: 0,
+    boxSizing: 'border-box',
   },
   backBtn: {
     background: 'none',
@@ -931,6 +955,9 @@ const styles = {
     padding: 6,
     cursor: 'pointer',
     color: '#334155',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
@@ -954,6 +981,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     border: '1px solid #fecaca',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   card: {
     backgroundColor: '#ffffff',
@@ -961,6 +990,8 @@ const styles = {
     padding: '16px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
     border: '1px solid #f1f5f9',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   cardHeader: {
     display: 'flex',
@@ -1034,6 +1065,8 @@ const styles = {
     padding: '12px',
     border: '1px solid #e2e8f0',
     marginBottom: 12,
+    boxSizing: 'border-box',
+    width: '100%',
   },
   itemRowHeader: {
     display: 'flex',
@@ -1077,12 +1110,15 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    boxSizing: 'border-box',
   },
   totalsCard: {
     backgroundColor: '#fff7ed',
     borderRadius: 16,
     padding: '18px',
     border: '1.5px solid #fed7aa',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   totalRow: {
     display: 'flex',

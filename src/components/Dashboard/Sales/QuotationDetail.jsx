@@ -339,10 +339,13 @@ export default function QuotationDetail() {
 
 const detailStyles = {
   container: {
-    padding: '16px 20px 80px',
+    padding: '12px 6px 80px',
     maxWidth: '1000px',
     margin: '0 auto',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+    width: '100%',
+    overflowX: 'hidden',
   },
   topBar: {
     display: 'flex',
@@ -468,8 +471,10 @@ const detailStyles = {
     backgroundColor: '#ffffff',
     border: '1px solid #e2e8f0',
     borderRadius: '16px',
-    padding: '24px 28px',
+    padding: '18px 14px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   docHeader: {
     display: 'flex',
@@ -478,6 +483,8 @@ const detailStyles = {
     borderBottom: '2.5px solid #ea580c',
     paddingBottom: '16px',
     marginBottom: '18px',
+    flexWrap: 'wrap',
+    gap: '12px',
   },
   brandTitle: {
     fontSize: '20px',
@@ -511,7 +518,7 @@ const detailStyles = {
   },
   infoGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
     gap: '14px',
     marginBottom: '20px',
   },
@@ -534,8 +541,11 @@ const detailStyles = {
   tableWrapper: {
     border: '1px solid #e2e8f0',
     borderRadius: '10px',
-    overflow: 'hidden',
+    overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
     marginBottom: '18px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   table: {
     width: '100%',
@@ -545,9 +555,11 @@ const detailStyles = {
     display: 'flex',
     justifyContent: 'flex-end',
     marginBottom: '20px',
+    width: '100%',
   },
   totalsBox: {
-    width: '300px',
+    width: '100%',
+    maxWidth: '320px',
     borderTop: '1px solid #e2e8f0',
     paddingTop: '10px',
   },

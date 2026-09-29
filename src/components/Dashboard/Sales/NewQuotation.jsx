@@ -36,6 +36,13 @@ export default function NewQuotation() {
   const userIsAdmin = isAdmin(user);
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth <= 768 : false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [customers, setCustomers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [productsList, setProductsList] = useState([]);
@@ -319,7 +326,7 @@ export default function NewQuotation() {
               </select>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginTop: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12, marginTop: 12 }}>
               <div>
                 <label style={styles.label}>
                   Client / Contractor Name <span style={{ color: '#ef4444' }}>*</span>
@@ -358,7 +365,7 @@ export default function NewQuotation() {
             <span>Depot & Quotation Validity</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginTop: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 14, marginTop: 12 }}>
             <div>
               <label style={styles.label}>Dispatch Warehouse Depot</label>
               <select
@@ -398,7 +405,7 @@ export default function NewQuotation() {
             <span>Proposed Delivery / Site Location</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginTop: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 10, marginTop: 12 }}>
             <div>
               <label style={styles.label}>Site / Project Name</label>
               <input
@@ -518,6 +525,110 @@ export default function NewQuotation() {
               >
                 <Plus size={16} /> Add Product to Catalog
               </button>
+            </div>
+          ) : isMobile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 10 }}>
+              {items.map((it, idx) => {
+                const itemTotal = (parseFloat(it.quantity) || 0) * (parseFloat(it.unitPrice) || 0);
+                const itemCost = (parseFloat(it.quantity) || 0) * (parseFloat(it.purchasePrice) || 0);
+                const itemMargin = itemTotal - itemCost;
+
+                return (
+                  <div key={idx} style={styles.mobileItemCard}>
+                    <div style={styles.mobileItemHeader}>
+                      <span style={styles.itemBadge}>Material #{idx + 1}</span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          style={styles.trashBtn}
+                        >
+                          <Trash2 size={16} color="#ef4444" />
+                        </button>
+                      )}
+                    </div>
+
+                    <label style={styles.label}>Material Name</label>
+                    <select
+                      value={it.productId}
+                      onChange={(e) => handleProductSelect(idx, e.target.value)}
+                      style={styles.select}
+                    >
+                      {productsList.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} {p.SKU ? `(${p.SKU})` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
+                      <div>
+                        <label style={styles.label}>Unit</label>
+                        <select
+                          value={it.unit}
+                          onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                          style={styles.select}
+                        >
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u.value} value={u.value}>
+                              {u.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={styles.label}>Quantity</label>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0.1"
+                          value={it.quantity}
+                          onChange={(e) => handleItemChange(idx, 'quantity', e.target.value)}
+                          style={styles.input}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: userIsAdmin ? '1fr 1fr' : '1fr', gap: 10, marginTop: 8 }}>
+                      <div>
+                        <label style={styles.label}>Offered Rate (₹/{it.unit}) *</label>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={it.unitPrice}
+                          onChange={(e) => handleItemChange(idx, 'unitPrice', e.target.value)}
+                          style={{ ...styles.input, fontWeight: 700, color: '#0f172a' }}
+                        />
+                      </div>
+
+                      {userIsAdmin && (
+                        <div>
+                          <label style={styles.label}>Cost (₹/{it.unit})</label>
+                          <input
+                            type="number"
+                            step="any"
+                            min="0"
+                            value={it.purchasePrice}
+                            onChange={(e) => handleItemChange(idx, 'purchasePrice', e.target.value)}
+                            style={{ ...styles.input, color: '#64748b' }}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={styles.mobileItemSummary}>
+                      <span>Item Total: <strong>₹{itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong></span>
+                      {userIsAdmin && (
+                        <span style={{ color: itemMargin >= 0 ? '#16a34a' : '#dc2626', fontWeight: 600 }}>
+                          Est Margin: ₹{itemMargin.toLocaleString('en-IN')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div style={styles.tableWrapper}>
@@ -646,7 +757,12 @@ export default function NewQuotation() {
         </div>
 
         {/* Summary & Submit Box */}
-        <div style={styles.summaryBar}>
+        <div style={{
+          ...styles.summaryBar,
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'stretch' : 'center',
+          padding: isMobile ? '16px 14px' : '16px 22px',
+        }}>
           <div>
             <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Quotation Estimate</div>
             <div style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a' }}>
@@ -663,6 +779,8 @@ export default function NewQuotation() {
             type="submit"
             style={{
               ...styles.submitBtn,
+              width: isMobile ? '100%' : 'auto',
+              justifyContent: 'center',
               opacity: (submitting || isCreationDisabled || productsList.length === 0 || items.length === 0) ? 0.6 : 1,
               cursor: (submitting || isCreationDisabled || productsList.length === 0 || items.length === 0) ? 'not-allowed' : 'pointer',
             }}
@@ -688,10 +806,13 @@ export default function NewQuotation() {
 
 const styles = {
   container: {
-    padding: '16px 20px 80px',
+    padding: '12px 6px 80px',
     maxWidth: '1000px',
     margin: '0 auto',
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+    width: '100%',
+    overflowX: 'hidden',
   },
   topBar: {
     marginBottom: '20px',
@@ -737,9 +858,11 @@ const styles = {
     backgroundColor: '#ffffff',
     border: '1px solid #e2e8f0',
     borderRadius: '14px',
-    padding: '18px 20px',
+    padding: '16px',
     marginBottom: '16px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   cardHeader: {
     display: 'flex',
@@ -838,6 +961,9 @@ const styles = {
     border: '1px solid #e2e8f0',
     borderRadius: '10px',
     overflowX: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   table: {
     width: '100%',
@@ -875,6 +1001,42 @@ const styles = {
     color: '#94a3b8',
     cursor: 'pointer',
     padding: 4,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mobileItemCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    padding: '14px',
+    border: '1px solid #e2e8f0',
+    boxSizing: 'border-box',
+    width: '100%',
+  },
+  mobileItemHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '8px',
+  },
+  itemBadge: {
+    fontSize: '11px',
+    fontWeight: 700,
+    color: '#ea580c',
+    backgroundColor: '#fff7ed',
+    padding: '3px 8px',
+    borderRadius: '6px',
+  },
+  mobileItemSummary: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '10px',
+    paddingTop: '8px',
+    borderTop: '1px dashed #cbd5e1',
+    fontSize: '12.5px',
+    flexWrap: 'wrap',
+    gap: '6px',
   },
   summaryBar: {
     backgroundColor: '#ffffff',
@@ -887,6 +1049,8 @@ const styles = {
     boxShadow: '0 4px 12px rgba(234, 88, 12, 0.08)',
     flexWrap: 'wrap',
     gap: '14px',
+    boxSizing: 'border-box',
+    width: '100%',
   },
   submitBtn: {
     background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',

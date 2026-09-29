@@ -219,7 +219,7 @@ export default function Dashboard({
         <main
           style={{
             flex: 1,
-            padding: isMobile ? "14px 14px 84px 14px" : "28px 36px",
+            padding: isMobile ? "10px 8px calc(76px + env(safe-area-inset-bottom, 0px)) 8px" : "28px 36px",
             maxWidth: 1440,
             width: "100%",
             margin: "0 auto",
