@@ -69,7 +69,7 @@ export const handleExportMultiplePDF = async (tables, mainTitle = "Report") => {
 
     doc.setTextColor("#a92427");
     doc.text(
-      "© Feed Bazaar Private Limited",
+      "© Anjali Constructions and Materials",
       pageWidth / 2,
       pageHeight - 5,
       { align: "center" }
@@ -140,7 +140,7 @@ export const handleExportMultipleExcel = (tables, mainTitle = "Report") => {
     const { title, columns, data } = table;
     
     // Header rows
-    const companyRow = ["Feed Bazaar"];
+    const companyRow = ["Anjali Constructions & Materials"];
     const titleRow = [title];
     
     const sheetData = [

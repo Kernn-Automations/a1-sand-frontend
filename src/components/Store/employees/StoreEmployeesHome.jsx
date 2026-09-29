@@ -17,20 +17,13 @@ export default function StoreEmployeesHome() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const mockEmployeesData = {
-    total: 25,
-    managers: 3,
-    staff: 22,
-    presentToday: 24,
-    onLeave: 1,
-    recentEmployees: [
-      { id: "EMP001", name: "Rajesh Kumar", mobile: "9876543210", email: "rajesh@example.com", sales: 45, role: "Manager" },
-      { id: "EMP002", name: "Priya Sharma", mobile: "9876543211", email: "priya@example.com", sales: 38, role: "Sales Executive" },
-      { id: "EMP003", name: "Amit Singh", mobile: "9876543212", email: "amit@example.com", sales: 32, role: "Sales Executive" },
-      { id: "EMP004", name: "Sneha Patel", mobile: "9876543213", email: "sneha@example.com", sales: 28, role: "Sales Executive" },
-      { id: "EMP005", name: "Vikram Mehta", mobile: "9876543214", email: "vikram@example.com", sales: 22, role: "Sales Executive" }
-    ]
-  };
+  const [stats] = useState({
+    total: 0,
+    managers: 0,
+    staff: 0,
+    presentToday: 0,
+    onLeave: 0,
+  });
 
   return (
     <div className={`store-employees-home ${isMobile ? 'mobile' : ''}`} style={{ padding: isMobile ? '12px 8px' : '20px' }}>

@@ -133,7 +133,12 @@ function generateClientReceiptFallback(payment) {
   doc.setFontSize(8.5);
   doc.setTextColor(203, 213, 225);
   doc.text("Premium River Sand, M-Sand, Aggregates & Building Supplies", 14, 19);
-  doc.text("GSTIN: 37AAAAA0000A1Z5 | Contact: +91 98765 43210", 14, 25);
+  const metaParts = [];
+  const gstinVal = payment.orgDetails?.gstin || payment.gstin;
+  const phoneVal = payment.orgDetails?.contactPhone || payment.contactPhone;
+  if (gstinVal) metaParts.push(`GSTIN: ${gstinVal}`);
+  if (phoneVal) metaParts.push(`Contact: ${phoneVal}`);
+  doc.text(metaParts.length > 0 ? metaParts.join(" | ") : "Official Payment Voucher", 14, 25);
 
   doc.setFillColor(255, 255, 255);
   doc.roundedRect(pageWidth - 62, 7, 48, 18, 2, 2, "F");

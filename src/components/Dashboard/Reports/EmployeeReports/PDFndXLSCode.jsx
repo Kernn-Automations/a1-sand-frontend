@@ -10,7 +10,7 @@ export const exportToExcel = (selectedNames, reportData) => {
   if (!reportData || !reportData.dateWise) return;
 
   // Header rows
-  const companyRow = ["Feed Bazaar"];
+  const companyRow = ["Anjali Constructions & Materials"];
   const titleRow = ["Employee Comparison Report"];
 
   const firstRow = ["S.No", "Date"];
@@ -121,7 +121,7 @@ export const exportToPDF = async (selectedNames, reportData) => {
     });
 
     doc.setTextColor("#a92427");
-    doc.text("© Feed Bazaar Private Limited", pageWidth / 2, pageHeight - 22 + footerLines.length * 4, { align: "center" });
+    doc.text("© Anjali Constructions and Materials", pageWidth / 2, pageHeight - 22 + footerLines.length * 4, { align: "center" });
 
     doc.setTextColor(0);
     doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 40, pageHeight - 10);

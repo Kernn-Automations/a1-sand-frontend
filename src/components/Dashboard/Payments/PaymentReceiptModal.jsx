@@ -78,9 +78,16 @@ export default function PaymentReceiptModal({ isOpen, onClose, payment }) {
                 <p className={styles.companySub}>
                   Premium River Sand, M-Sand, Aggregates & Building Supplies
                 </p>
-                <p className={styles.companyMeta}>
-                  GSTIN: 37AAAAA0000A1Z5 | Ph: +91 98765 43210
-                </p>
+                {(payment?.gstin || payment?.orgDetails?.gstin || payment?.contactPhone || payment?.orgDetails?.contactPhone) ? (
+                  <p className={styles.companyMeta}>
+                    {[
+                      (payment.gstin || payment.orgDetails?.gstin) && `GSTIN: ${payment.gstin || payment.orgDetails?.gstin}`,
+                      (payment.contactPhone || payment.orgDetails?.contactPhone) && `Ph: ${payment.contactPhone || payment.orgDetails?.contactPhone}`
+                    ].filter(Boolean).join(" | ")}
+                  </p>
+                ) : (
+                  <p className={styles.companyMeta}>Official Commercial Payment Receipt</p>
+                )}
               </div>
               <div className={styles.voucherStatusBadge}>
                 <FaCheckCircle />

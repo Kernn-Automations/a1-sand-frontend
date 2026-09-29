@@ -21,42 +21,12 @@ function EmployeeDetailsPage() {
   const fetchEmployee = async () => {
     try {
       setLoading(true);
-      // Mock data for now - replace with actual API call
-      // const res = await axiosAPI.get(`/employees/${id}`);
-      // setEmployee(res.data);
-      
-      // Mock employee data
-      const mockEmployee = {
-        id: id,
-        name: "Rajesh Kumar",
-        mobile: "9876543210",
-        email: "rajesh@example.com",
-        role: "Sales Executive",
-        department: "Sales",
-        joiningDate: "15-01-2022",
-        address: "123 Main Street, Downtown",
-        city: "Mumbai",
-        state: "Maharashtra",
-        pincode: "400001",
-        isActive: true,
-        totalSales: 45,
-        totalRevenue: 1250000,
-        averageOrderValue: 27778,
-        performance: {
-          thisMonth: { sales: 12, revenue: 350000, target: 400000, salesTarget: 14 },
-          lastMonth: { sales: 15, revenue: 420000, target: 400000, salesTarget: 14 },
-          thisYear: { sales: 45, revenue: 1250000, target: 1200000, salesTarget: 50 }
-        },
-        sales: [
-          { id: "SALE001", date: "15-01-2024", customer: "Customer A", amount: 35000, status: "Completed" },
-          { id: "SALE002", date: "12-01-2024", customer: "Customer B", amount: 28000, status: "Completed" },
-          { id: "SALE003", date: "10-01-2024", customer: "Customer C", amount: 42000, status: "Completed" },
-          { id: "SALE004", date: "08-01-2024", customer: "Customer D", amount: 19000, status: "Completed" },
-          { id: "SALE005", date: "05-01-2024", customer: "Customer E", amount: 31000, status: "Completed" }
-        ]
-      };
-      setEmployee(mockEmployee);
+      const res = await axiosAPI.get(`/employees/${id}`);
+      if (res.data) {
+        setEmployee(res.data);
+      }
     } catch (err) {
+      console.error("Error fetching employee details:", err);
       setError(err.response?.data?.message || "Failed to load employee details");
       setIsModalOpen(true);
     } finally {

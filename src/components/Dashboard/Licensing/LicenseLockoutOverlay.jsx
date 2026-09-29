@@ -83,22 +83,17 @@ export default function LicenseLockoutOverlay() {
             order_id: razorpayOrderId,
             handler: async function (response) {
               setProcessing(true);
-              setSuccessMessage("Payment successful! Verifying and unlocking system...");
-              // Simulated or live capture callback
-              try {
-                await axios.post(`${API_URL}/api/payment/callback`, {
-                  event: "payment_success",
-                  payment_id: response.razorpay_payment_id || `pay_live_${Date.now()}`,
-                  razorpay_order_id: razorpayOrderId,
-                  reference_id: internalOrderId,
-                  amount: checkoutParams.amount,
-                  currency: checkoutParams.currency || "INR",
-                  plan_id: selectedPlan,
-                });
+              setSuccessMessage("Payment received on gateway! Verifying webhook confirmation...");
+              // Poll for backend webhook confirmation
+              let attempts = 0;
+              const pollInterval = setInterval(async () => {
+                attempts += 1;
                 await checkLicense();
-              } catch (e) {
-                console.error("Callback error:", e);
-              }
+                if (attempts >= 10) {
+                  clearInterval(pollInterval);
+                  setProcessing(false);
+                }
+              }, 2000);
             },
             prefill: {
               name: "Anjali Constructions Administrator",
@@ -109,31 +104,12 @@ export default function LicenseLockoutOverlay() {
             },
           });
           rzp.open();
+        } else if (res.data?.checkoutUrl || res.data?.paymentUrl) {
+          // Redirect to central checkout page
+          window.location.href = res.data.checkoutUrl || res.data.paymentUrl;
         } else {
-          // In test/development mode or when gateway checkout URL is provided:
-          // Simulate instant development capture so user can test unlocking smoothly
-          setSuccessMessage("Initiating sandbox renewal verification...");
-          setTimeout(async () => {
-            try {
-              await axios.post(`${API_URL}/api/payment/callback`, {
-                event: "payment_success",
-                payment_id: `pay_mock_${Date.now()}`,
-                razorpay_order_id: razorpayOrderId,
-                reference_id: internalOrderId,
-                amount: plan ? plan.amountPaise : 4999900,
-                currency: "INR",
-                plan_id: selectedPlan,
-              });
-              setSuccessMessage("Payment verified! Unlocking application...");
-              setTimeout(() => {
-                checkLicense();
-                setProcessing(false);
-              }, 1200);
-            } catch (err) {
-              setErrorMessage("Could not finalize payment: " + err.message);
-              setProcessing(false);
-            }
-          }, 1000);
+          setErrorMessage("Online payment gateway is temporarily unreachable. Please contact the administrator or apply an offline license key.");
+          setProcessing(false);
         }
       }
     } catch (err) {
@@ -461,7 +437,7 @@ export default function LicenseLockoutOverlay() {
           }}
         >
           <span>Secured by Kernn Payment Orchestrator & Razorpay</span>
-          <span>Support: +91 98765 43210</span>
+          <span>Support: support@kernn.ai</span>
         </div>
       </div>
     </div>

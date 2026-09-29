@@ -583,6 +583,21 @@
     justify-content: center;
   }
   .lic-offline-form {
-    flex-direction: column;
+}
+
+/* --------------------------------------------------------------------------
+   Webhook & Live Checkout Loading Modal
+   -------------------------------------------------------------------------- */
+.lic-spinning-loader {
+  animation: licSpin 1.2s linear infinite;
+}
+
+@keyframes licSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
+

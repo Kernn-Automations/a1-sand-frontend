@@ -206,8 +206,8 @@ export default function QuotationDetail() {
             <div style={detailStyles.brandTitle}>Anjali Constructions & Materials</div>
             <div style={detailStyles.docSubtitle}>Commercial Quotation / Material Estimate</div>
             <div style={detailStyles.companyMeta}>
-              Sy. No. 120/A, Quarry Road, Main Yard, Hyderabad - 500001<br />
-              Direct Sales & Supply Hotline: <strong>+91 98765 43210</strong>
+              Premium River Sand, M-Sand, Aggregates & Building Supplies<br />
+              Commercial Sales & Material Supply
             </div>
           </div>
 

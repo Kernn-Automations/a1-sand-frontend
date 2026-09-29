@@ -41,11 +41,17 @@ export default function LicenseBanner({ onOpenModal }) {
     license.status === "LOCKED_OUT" ||
     license.status === "TAMPERED_LOCKED";
 
-  const hasReminder = Boolean(license.activeReminder);
+  // Only show expiring-soon warning notice if license expires in 7 days or less
+  const isExpiringSoon =
+    typeof license.daysRemaining === "number" &&
+    license.daysRemaining <= 7 &&
+    license.daysRemaining >= 0;
+
+  const hasReminder = Boolean(license.activeReminder) && isExpiringSoon;
   const isInGrace = Boolean(license.isInGracePeriod);
   const isSoftLocked = license.lockoutMode === "SOFT" && license.status === "EXPIRED";
 
-  // If valid with no warning/grace period, do not display
+  // If valid with more than 7 days left and not in grace period, do not display notice banner
   if (!isNoActiveLicense && !hasReminder && !isInGrace && !isSoftLocked) {
     return null;
   }
@@ -114,7 +120,9 @@ export default function LicenseBanner({ onOpenModal }) {
           </span>
           <span className={styles.message}>
             {license.activeReminder?.message ||
-              `License expires in ${license.daysRemaining} days. Renew now to avoid lock.`}
+              (isInGrace
+                ? "License expired! Grace period active. All software features remain operational. Renew now to avoid lockout."
+                : `License expires in ${license.daysRemaining} days. Renew now to avoid lock.`)}
           </span>
         </div>
       </div>

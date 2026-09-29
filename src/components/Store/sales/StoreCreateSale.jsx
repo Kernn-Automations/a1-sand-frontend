@@ -1343,11 +1343,11 @@ export default function StoreCreateSale() {
         total: displayTotal,
       },
       totalBags: totalBags,
-      upiId: "feedbazaar@upi",
+      upiId: "",
       bankDetails: {
-        accountNumber: "1234567890",
-        ifsc: "FEEDBAZAAR0001",
-        bankName: "Feed Bazaar Bank",
+        accountNumber: "",
+        ifsc: "",
+        bankName: "",
       },
     };
   }, [
@@ -5382,8 +5382,8 @@ export default function StoreCreateSale() {
                                 }
 
                                 const upiId =
-                                  reviewData?.upiId || "feedbazaar@upi";
-                                const upiUrl = `upi://pay?pa=${upiId}&pn=Feed Bazaar Private Limited&am=${amount.toFixed(2)}&cu=INR`;
+                                  reviewData?.upiId || "";
+                                const upiUrl = `upi://pay?pa=${upiId}&pn=Store Payment&am=${amount.toFixed(2)}&cu=INR`;
 
                                 setQrCodeData((prev) => ({
                                   ...prev,

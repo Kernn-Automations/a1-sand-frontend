@@ -77,7 +77,7 @@ export const handleExportPDF = async (columns, data, title, grandTotal = null) =
     });
 
     doc.setTextColor("#a92427");
-    doc.text("© Feed Bazaar Private Limited", pageWidth / 2, pageHeight - 12, {
+    doc.text("© Anjali Constructions and Materials", pageWidth / 2, pageHeight - 12, {
       align: "center",
     });
 
@@ -165,7 +165,7 @@ export const handleExportExcel = (columns, data, title) => {
   // Header row 0: Company Name
   // Header row 1: Report Title
   // Header row 2: Table Columns
-  const headerRow = ["Feed Bazaar"];
+  const headerRow = ["Anjali Constructions & Materials"];
   const titleRow = [title];
   
   const formattedData = isArrayRows

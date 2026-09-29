@@ -126,7 +126,7 @@ export default function SessionConflictPage() {
     <div style={shellStyle}>
       <div style={panelStyle}>
         <div style={brandRowStyle}>
-          <div style={brandBadgeStyle}>Feed Bazaar</div>
+          <div style={brandBadgeStyle}>Anjali ERP</div>
           <div style={{ ...brandBadgeStyle, fontWeight: 600 }}>Session Guard</div>
         </div>
 

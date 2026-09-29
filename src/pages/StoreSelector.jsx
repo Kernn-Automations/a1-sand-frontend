@@ -371,7 +371,7 @@ const StoreSelector = () => {
           <img src={feedsLogo} alt="Feeds Logo" className={styles.logo} />
         </div>
 
-        <h1 className={styles.companyName}>FEED BAZAAR PVT LTD</h1>
+        <h1 className={styles.companyName}>ANJALI CONSTRUCTIONS & MATERIALS</h1>
 
         <div className={styles.welcomeMessage}>
           Welcome! <span className={styles.username}>{username}</span>

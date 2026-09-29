@@ -106,6 +106,9 @@ export default function LicenseSettingsPage() {
   });
   const [issuingManualLicense, setIssuingManualLicense] = useState(false);
 
+  // Online Checkout Webhook Listener State
+  const [checkoutSession, setCheckoutSession] = useState(null);
+
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
   const authHeaders = { Authorization: `Bearer ${token}` };
 
@@ -122,6 +125,70 @@ export default function LicenseSettingsPage() {
       return () => clearTimeout(timer);
     }
   }, [statusMessage]);
+
+  // Polling loop for active checkout session checking for webhook confirmation
+  useEffect(() => {
+    if (!checkoutSession?.invoiceId || checkoutSession.status !== "checking") return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const pollRes = await axios.get(
+          `${API_URL}/api/licensing/invoices/${checkoutSession.invoiceId}/status`
+        );
+
+        if (!isMounted) return;
+
+        setCheckoutSession((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            checkCount: (prev.checkCount || 0) + 1,
+          };
+        });
+
+        if (pollRes.data?.isPaid || pollRes.data?.status === "paid") {
+          setCheckoutSession((prev) => (prev ? { ...prev, status: "paid" } : null));
+          clearInterval(interval);
+          loadAllLicenseData();
+        }
+      } catch (err) {
+        console.warn("[CheckoutWebhook] Error polling webhook status:", err.message);
+      }
+    }, 2500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [checkoutSession?.invoiceId, checkoutSession?.status]);
+
+  // Manual Trigger to Check Payment Webhook Status immediately
+  const handleManualCheckStatus = async () => {
+    if (!checkoutSession?.invoiceId) return;
+    try {
+      setCheckoutSession((prev) => (prev ? { ...prev, checkingManual: true } : null));
+      const pollRes = await axios.get(
+        `${API_URL}/api/licensing/invoices/${checkoutSession.invoiceId}/status`
+      );
+      if (pollRes.data?.isPaid || pollRes.data?.status === "paid") {
+        setCheckoutSession((prev) => (prev ? { ...prev, status: "paid", checkingManual: false } : null));
+        await loadAllLicenseData();
+      } else {
+        setCheckoutSession((prev) =>
+          prev
+            ? {
+                ...prev,
+                checkCount: (prev.checkCount || 0) + 1,
+                checkingManual: false,
+              }
+            : null
+        );
+      }
+    } catch (e) {
+      setCheckoutSession((prev) => (prev ? { ...prev, checkingManual: false } : null));
+    }
+  };
 
   const loadAllLicenseData = async () => {
     try {
@@ -185,11 +252,39 @@ export default function LicenseSettingsPage() {
   const handleCheckout = async (planId, billingCycle = "monthly") => {
     try {
       setStatusMessage({ type: "info", text: "Connecting to payment gateway..." });
-      const res = await axios.post(
-        `${API_URL}/api/licensing/initiate-order`,
-        { planId, billingCycle },
-        { headers: authHeaders }
-      );
+      
+      let res;
+      try {
+        res = await axios.post(
+          `${API_URL}/api/licensing/initiate-order`,
+          { planId, billingCycle },
+          { headers: authHeaders }
+        );
+      } catch (postErr) {
+        // If 409 Conflict: user already has an active pending order within 30 minutes
+        if (postErr.response?.status === 409 && postErr.response?.data?.pendingOrder) {
+          const po = postErr.response.data.pendingOrder;
+          if (po.paymentUrl) {
+            window.open(po.paymentUrl, "_blank");
+          }
+          setCheckoutSession({
+            invoiceId: po.id,
+            invoiceNumber: po.invoiceNumber || po.invoice_number,
+            amount: po.amount,
+            planName: "License Subscription",
+            paymentUrl: po.paymentUrl,
+            status: "checking",
+            checkCount: 0,
+            checkingManual: false,
+          });
+          setStatusMessage({
+            type: "info",
+            text: "Resumed your pending checkout order. Awaiting webhook payment confirmation.",
+          });
+          return;
+        }
+        throw postErr;
+      }
 
       if (res.data?.status === "paid") {
         setStatusMessage({ type: "success", text: "License activated successfully!" });
@@ -199,9 +294,20 @@ export default function LicenseSettingsPage() {
 
       if (res.data?.paymentUrl) {
         window.open(res.data.paymentUrl, "_blank");
+        const foundPlan = plans.find((p) => (p.package_code || p.id) === planId);
+        setCheckoutSession({
+          invoiceId: res.data.invoiceId || res.data.order?.id,
+          invoiceNumber: res.data.invoiceNumber || res.data.order?.invoice_number,
+          amount: res.data.amount || res.data.order?.amount,
+          planName: foundPlan?.name || "Software License",
+          paymentUrl: res.data.paymentUrl,
+          status: "checking",
+          checkCount: 0,
+          checkingManual: false,
+        });
         setStatusMessage({
           type: "success",
-          text: "Payment window opened. Complete payment to activate your license.",
+          text: "Payment window opened. Waiting for webhook confirmation.",
         });
       }
     } catch (err) {
@@ -209,6 +315,26 @@ export default function LicenseSettingsPage() {
         type: "error",
         text: err.response?.data?.message || err.message || "Failed to initiate payment checkout.",
       });
+    }
+  };
+
+  // Resume payment for an existing pending order/invoice
+  const handleResumeInvoicePayment = (inv) => {
+    if (inv.paymentUrl) {
+      window.open(inv.paymentUrl, "_blank");
+    }
+    setCheckoutSession({
+      invoiceId: inv.id,
+      invoiceNumber: inv.invoiceNumber,
+      amount: inv.totalAmount || inv.amount,
+      planName: inv.planName || inv.description || "Software License",
+      paymentUrl: inv.paymentUrl,
+      status: "checking",
+      checkCount: 0,
+      checkingManual: false,
+    });
+    if (selectedInvoice) {
+      setSelectedInvoice(null);
     }
   };
 
@@ -899,10 +1025,10 @@ export default function LicenseSettingsPage() {
               <div className="lic-table-header">
                 <div>
                   <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>
-                    Paid GST Tax Invoices
+                    Billing Invoices &amp; Subscription Orders
                   </h3>
                   <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>
-                    Corporate tax records and payment receipts for software subscriptions.
+                    Official GST tax invoices, payment receipts, and pending license orders.
                   </p>
                 </div>
               </div>
@@ -911,7 +1037,7 @@ export default function LicenseSettingsPage() {
                 <table className="lic-table">
                   <thead>
                     <tr>
-                      <th>Invoice #</th>
+                      <th>Invoice / Order #</th>
                       <th>Date</th>
                       <th>Plan Description</th>
                       <th>Total Amount</th>
@@ -927,48 +1053,116 @@ export default function LicenseSettingsPage() {
                         </td>
                       </tr>
                     ) : (
-                      taxInvoices.map((inv) => (
-                        <tr key={inv.id || inv.invoiceNumber}>
-                          <td style={{ fontWeight: 700, fontFamily: "monospace" }}>
-                            {inv.invoiceNumber}
-                          </td>
-                          <td>
-                            {new Date(inv.invoiceDate || inv.createdAt).toLocaleDateString("en-IN", {
+                      taxInvoices.map((inv) => {
+                        const invDate = inv.invoiceDate || inv.createdAt || inv.date;
+                        const dateStr = invDate
+                          ? new Date(invDate).toLocaleDateString("en-IN", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
-                            })}
-                          </td>
-                          <td>{inv.description || "Anjali ERP Software License"}</td>
-                          <td style={{ fontWeight: 700 }}>
-                            ₹{Number(inv.totalAmount || inv.amount || 0).toLocaleString("en-IN")}
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                backgroundColor: "#ecfdf5",
-                                color: "#047857",
-                                padding: "3px 8px",
-                                borderRadius: "9999px",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                              }}
-                            >
-                              ● PAID
-                            </span>
-                          </td>
-                          <td style={{ textAlign: "right" }}>
-                            <button
-                              type="button"
-                              className="lic-btn-outline"
-                              onClick={() => setSelectedInvoice(inv)}
-                            >
-                              <FileText size={14} />
-                              <span>View Invoice</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                            })
+                          : "—";
+                        const statusUpper = (inv.status || "PENDING").toUpperCase();
+                        const isPaid = statusUpper === "PAID";
+                        const isPending = statusUpper === "PENDING" || statusUpper === "INITIATED";
+
+                        return (
+                          <tr key={inv.id || inv.invoiceNumber}>
+                            <td style={{ fontWeight: 700, fontFamily: "monospace" }}>
+                              {inv.invoiceNumber}
+                            </td>
+                            <td>{dateStr}</td>
+                            <td>{inv.planName || inv.description || "Anjali ERP Software License"}</td>
+                            <td style={{ fontWeight: 700 }}>
+                              ₹{Number(inv.totalAmount || inv.amount || 0).toLocaleString("en-IN")}
+                            </td>
+                            <td>
+                              {isPaid ? (
+                                <span
+                                  style={{
+                                    backgroundColor: "#ecfdf5",
+                                    color: "#047857",
+                                    padding: "3px 8px",
+                                    borderRadius: "9999px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ● PAID
+                                </span>
+                              ) : isPending ? (
+                                <span
+                                  style={{
+                                    backgroundColor: "#fef3c7",
+                                    color: "#b45309",
+                                    padding: "3px 8px",
+                                    borderRadius: "9999px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ● INITIATED
+                                </span>
+                              ) : statusUpper === "FAILED" ? (
+                                <span
+                                  style={{
+                                    backgroundColor: "#fee2e2",
+                                    color: "#b91c1c",
+                                    padding: "3px 8px",
+                                    borderRadius: "9999px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ● FAILED
+                                </span>
+                              ) : (
+                                <span
+                                  style={{
+                                    backgroundColor: "#f1f5f9",
+                                    color: "#64748b",
+                                    padding: "3px 8px",
+                                    borderRadius: "9999px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  ● {statusUpper}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                              {isPending && inv.paymentUrl && (
+                                <button
+                                  type="button"
+                                  className="lic-btn-primary"
+                                  style={{
+                                    padding: "4px 10px",
+                                    fontSize: "12px",
+                                    marginRight: "6px",
+                                    width: "auto",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                  }}
+                                  onClick={() => handleResumeInvoicePayment(inv)}
+                                >
+                                  <CreditCard size={13} />
+                                  <span>Pay Now</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="lic-btn-outline"
+                                onClick={() => setSelectedInvoice(inv)}
+                              >
+                                <FileText size={14} />
+                                <span>{isPaid ? "View Invoice" : "View Details"}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1351,102 +1545,382 @@ export default function LicenseSettingsPage() {
       )}
 
       {/* =========================================================================
-          MODAL 1: VIEW TAX INVOICE MODAL
+          MODAL 1: VIEW TAX INVOICE / ORDER MODAL
           ========================================================================= */}
-      {selectedInvoice && (
-        <div className="lic-modal-overlay" onClick={() => setSelectedInvoice(null)}>
-          <div className="lic-modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="lic-modal-header">
-              <div>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>
-                  Tax Invoice {selectedInvoice.invoiceNumber}
-                </h3>
-                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>
-                  GST SAC Code: 997331 (Software Subscription)
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedInvoice(null)}
-                style={{ background: "none", border: "none", cursor: "pointer" }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+      {selectedInvoice && (() => {
+        const invTotal = Number(selectedInvoice.totalAmount ?? selectedInvoice.amount ?? 0);
+        const invTaxable = Number(selectedInvoice.taxableAmount ?? (invTotal / 1.18).toFixed(2));
+        const invTax = Number(selectedInvoice.totalTax ?? (invTotal - invTaxable).toFixed(2));
+        const statusUpper = (selectedInvoice.status || "PENDING").toUpperCase();
+        const isPaid = statusUpper === "PAID";
+        const isPending = statusUpper === "PENDING" || statusUpper === "INITIATED";
 
-            <div className="lic-modal-body" style={{ fontSize: "13px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  paddingBottom: "16px",
-                  borderBottom: "1px solid #e2e8f0",
-                  marginBottom: "16px",
-                }}
-              >
+        const supplierName = selectedInvoice.supplier?.name || "Kernn Automations Private Limited";
+        const supplierGstin = selectedInvoice.supplier?.gstin;
+        const supplierAddr = selectedInvoice.supplier?.address || "Hyderabad, Telangana, India";
+
+        const clientName = selectedInvoice.client?.name || selectedInvoice.buyer?.name || "Anjali Constructions and Materials";
+        const clientGstin = selectedInvoice.client?.gstin || selectedInvoice.buyer?.gstin || "";
+        const clientAddr = selectedInvoice.client?.address || selectedInvoice.buyer?.address || "Sy. No. 120/A, Quarry Road, Main Yard, Hyderabad, Telangana - 500001";
+
+        return (
+          <div className="lic-modal-overlay" onClick={() => setSelectedInvoice(null)}>
+            <div className="lic-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="lic-modal-header">
                 <div>
-                  <strong>Supplier:</strong>
-                  <div>Kernn Automations Private Limited</div>
-                  <div style={{ color: "#64748b", fontSize: "12px" }}>
-                    GSTIN: 36AAFCK1234A1ZP • Hyderabad, TS
-                  </div>
+                  <h3 style={{ margin: 0, fontSize: "16px", fontWeight: 700 }}>
+                    {isPaid ? "Tax Invoice" : "Order / Proforma Invoice"} {selectedInvoice.invoiceNumber}
+                  </h3>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#64748b" }}>
+                    GST SAC Code: 997331 (Software Subscription)
+                  </p>
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <strong>Customer:</strong>
-                  <div>Anjali Constructions and Materials</div>
-                  <div style={{ color: "#64748b", fontSize: "12px" }}>
-                    GSTIN: 37AAACA0000A1Z5 • Visakhapatnam, AP
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedInvoice(null)}
+                  style={{ background: "none", border: "none", cursor: "pointer" }}
+                >
+                  <X size={18} />
+                </button>
               </div>
 
-              <div style={{ marginBottom: "16px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>Description:</span>
-                  <strong>{selectedInvoice.description || "Anjali ERP Cloud Subscription"}</strong>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>Taxable Value:</span>
-                  <span>₹{Number(selectedInvoice.taxableAmount || (selectedInvoice.totalAmount / 1.18).toFixed(2)).toLocaleString("en-IN")}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <span>CGST (9%) + SGST (9%):</span>
-                  <span>₹{Number(selectedInvoice.totalTax || (selectedInvoice.totalAmount - selectedInvoice.totalAmount / 1.18).toFixed(2)).toLocaleString("en-IN")}</span>
-                </div>
+              <div className="lic-modal-body" style={{ fontSize: "13px" }}>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    paddingTop: "8px",
-                    borderTop: "1.5px solid #0f172a",
-                    fontWeight: 800,
-                    fontSize: "15px",
-                    color: "#ea580c",
+                    paddingBottom: "16px",
+                    borderBottom: "1px solid #e2e8f0",
+                    marginBottom: "16px",
+                    gap: "12px",
                   }}
                 >
-                  <span>Total Paid:</span>
-                  <span>₹{Number(selectedInvoice.totalAmount || 0).toLocaleString("en-IN")}</span>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ color: "#334155" }}>Supplier (Service Provider):</strong>
+                    <div style={{ fontWeight: 600, marginTop: "2px" }}>{supplierName}</div>
+                    <div style={{ color: "#64748b", fontSize: "12px", marginTop: "2px" }}>
+                      {supplierGstin ? `GSTIN: ${supplierGstin}` : "GST: Composition / Not Registered"}
+                    </div>
+                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
+                      {supplierAddr}
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, textAlign: "right" }}>
+                    <strong style={{ color: "#334155" }}>Customer (Billed To):</strong>
+                    <div style={{ fontWeight: 600, marginTop: "2px" }}>{clientName}</div>
+                    <div style={{ color: "#64748b", fontSize: "12px", marginTop: "2px" }}>
+                      {clientGstin ? `GSTIN: ${clientGstin}` : "GST: Unregistered / Consumer"}
+                    </div>
+                    <div style={{ color: "#64748b", fontSize: "11px", marginTop: "1px" }}>
+                      {clientAddr || "Registered Business Address"}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <span>Description:</span>
+                    <strong>{selectedInvoice.planName || selectedInvoice.description || "Anjali ERP Cloud Subscription"}</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <span>Payment Status:</span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: "12px",
+                        padding: "2px 8px",
+                        borderRadius: "9999px",
+                        backgroundColor: isPaid ? "#ecfdf5" : "#fef3c7",
+                        color: isPaid ? "#047857" : "#b45309",
+                      }}
+                    >
+                      ● {isPaid ? "PAID" : isPending ? "INITIATED / PENDING" : statusUpper}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>Taxable Value:</span>
+                    <span>₹{invTaxable.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span>CGST (9%) + SGST (9%):</span>
+                    <span>₹{invTax.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      paddingTop: "8px",
+                      borderTop: "1.5px solid #0f172a",
+                      fontWeight: 800,
+                      fontSize: "15px",
+                      color: isPaid ? "#047857" : "#ea580c",
+                    }}
+                  >
+                    <span>{isPaid ? "Total Paid:" : "Total Amount Due:"}</span>
+                    <span>₹{invTotal.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
                 </div>
               </div>
+
+              <div className="lic-modal-footer">
+                {isPending && selectedInvoice.paymentUrl && (
+                  <button
+                    type="button"
+                    className="lic-btn-primary"
+                    style={{ width: "auto" }}
+                    onClick={() => handleResumeInvoicePayment(selectedInvoice)}
+                  >
+                    <CreditCard size={15} />
+                    <span>Complete Payment Now</span>
+                  </button>
+                )}
+                {isPaid && (
+                  <button
+                    type="button"
+                    className="lic-btn-outline"
+                    onClick={() => window.print()}
+                  >
+                    <Printer size={15} />
+                    <span>Print Invoice</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={isPending ? "lic-btn-outline" : "lic-btn-primary"}
+                  style={{ width: "auto" }}
+                  onClick={() => setSelectedInvoice(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* =========================================================================
+          MODAL: CHECKOUT PAYMENT & WEBHOOK REAL-TIME STATUS MODAL
+          ========================================================================= */}
+      {/* =========================================================================
+          MODAL: CHECKOUT PAYMENT & REAL-TIME STATUS MODAL
+          ========================================================================= */}
+      {checkoutSession && (
+        <div className="lic-modal-overlay">
+          <div className="lic-modal-content" style={{ maxWidth: "480px", borderRadius: "16px", overflow: "hidden", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}>
+            {/* Modal Header */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px 20px",
+              borderBottom: "1px solid #f1f5f9",
+              background: "#ffffff"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: checkoutSession.status === "paid" ? "#10b981" : "#fff7ed",
+                    border: checkoutSession.status === "paid" ? "none" : "1px solid #fed7aa",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: checkoutSession.status === "paid" ? "#fff" : "#ea580c",
+                  }}
+                >
+                  {checkoutSession.status === "paid" ? <CheckCircle2 size={20} /> : <CreditCard size={18} />}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#0f172a" }}>
+                    {checkoutSession.status === "paid" ? "Payment Confirmed" : "Secure Payment Checkout"}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "11px", color: "#64748b" }}>
+                    Order #{checkoutSession.invoiceNumber || checkoutSession.invoiceId}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCheckoutSession(null)}
+                style={{
+                  background: "#f8fafc",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  padding: "6px",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s ease"
+                }}
+                title="Dismiss"
+              >
+                <X size={16} />
+              </button>
             </div>
 
-            <div className="lic-modal-footer">
-              <button
-                type="button"
-                className="lic-btn-outline"
-                onClick={() => window.print()}
-              >
-                <Printer size={15} />
-                <span>Print Invoice</span>
-              </button>
-              <button
-                type="button"
-                className="lic-btn-primary"
-                style={{ width: "auto" }}
-                onClick={() => setSelectedInvoice(null)}
-              >
-                Close
-              </button>
+            {/* Modal Body */}
+            <div style={{ padding: "24px 24px 20px 24px", background: "#ffffff", textAlign: "center" }}>
+              {checkoutSession.status === "paid" ? (
+                <div style={{ padding: "10px 0" }}>
+                  <div
+                    style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ecfdf5",
+                      border: "2px solid #a7f3d0",
+                      color: "#10b981",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 16px auto",
+                    }}
+                  >
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "18px", fontWeight: 800, color: "#0f172a" }}>
+                    License Activated Successfully!
+                  </h4>
+                  <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b", lineHeight: 1.5 }}>
+                    Your payment was confirmed. All features, quotas, and employee seats have been unlocked for your organization.
+                  </p>
+
+                  <div style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    textAlign: "left",
+                    marginBottom: "10px"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Subscription Plan</span>
+                      <strong style={{ color: "#0f172a" }}>{checkoutSession.planName}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Invoice #</span>
+                      <strong style={{ color: "#0f172a" }}>{checkoutSession.invoiceNumber}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px dashed #cbd5e1", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Total Paid</span>
+                      <strong style={{ color: "#059669", fontSize: "15px" }}>₹{Number(checkoutSession.amount || 0).toLocaleString("en-IN")}</strong>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {/* Modern Sleek Spinner with Centered Card Icon */}
+                  <div style={{ position: "relative", width: "68px", height: "68px", margin: "4px auto 18px auto" }}>
+                    <svg style={{ width: "100%", height: "100%", animation: "licSpin 1.4s linear infinite" }} viewBox="0 0 50 50">
+                      <circle cx="25" cy="25" r="20" fill="none" stroke="#f1f5f9" strokeWidth="3.5" />
+                      <circle cx="25" cy="25" r="20" fill="none" stroke="#ea580c" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="80 150" />
+                    </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#ea580c" }}>
+                      <CreditCard size={22} />
+                    </div>
+                  </div>
+
+                  <h4 style={{ margin: "0 0 6px 0", fontSize: "17px", fontWeight: 700, color: "#0f172a" }}>
+                    Awaiting Payment in Checkout Window
+                  </h4>
+                  <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#64748b", lineHeight: 1.5, maxWidth: "380px", marginLeft: "auto", marginRight: "auto" }}>
+                    Please complete your UPI, Card, or NetBanking payment in the opened tab. Your license will activate automatically once approved.
+                  </p>
+
+                  {/* Clean Order Summary Card */}
+                  <div style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "12px",
+                    padding: "14px 16px",
+                    textAlign: "left",
+                    marginBottom: "16px"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Subscription Plan</span>
+                      <strong style={{ color: "#0f172a" }}>{checkoutSession.planName}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "13px" }}>
+                      <span style={{ color: "#64748b" }}>Amount Payable</span>
+                      <strong style={{ color: "#ea580c", fontSize: "14.5px" }}>₹{Number(checkoutSession.amount || 0).toLocaleString("en-IN")}</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px", borderTop: "1px solid #e2e8f0", fontSize: "12px" }}>
+                      <span style={{ color: "#64748b" }}>Live Status</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", color: "#059669", fontWeight: 600 }}>
+                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 0 3px rgba(16, 185, 129, 0.25)" }} />
+                        Waiting for confirmation
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: checkoutSession.status === "paid" ? "center" : "space-between",
+              padding: "14px 20px",
+              background: "#f8fafc",
+              borderTop: "1px solid #f1f5f9"
+            }}>
+              {checkoutSession.status === "paid" ? (
+                <button
+                  type="button"
+                  className="lic-btn-primary"
+                  style={{ width: "100%", padding: "10px", fontSize: "14px", fontWeight: 600 }}
+                  onClick={() => setCheckoutSession(null)}
+                >
+                  Continue to ERP Dashboard
+                </button>
+              ) : (
+                <>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {checkoutSession.paymentUrl && (
+                      <button
+                        type="button"
+                        className="lic-btn-primary"
+                        style={{ fontSize: "12px", padding: "7px 14px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                        onClick={() => window.open(checkoutSession.paymentUrl, "_blank")}
+                        title="Reopen payment tab if closed"
+                      >
+                        <ExternalLink size={13} />
+                        <span>Reopen Window</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="lic-btn-outline"
+                      style={{ fontSize: "12px", padding: "7px 12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                      disabled={checkoutSession.checkingManual}
+                      onClick={handleManualCheckStatus}
+                    >
+                      <RefreshCw size={13} className={checkoutSession.checkingManual ? "lic-spinning-loader" : ""} />
+                      <span>{checkoutSession.checkingManual ? "Checking..." : "I've Paid"}</span>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: "12px",
+                      color: "#64748b",
+                      cursor: "pointer",
+                      padding: "6px 8px",
+                      textDecoration: "underline"
+                    }}
+                    onClick={() => setCheckoutSession(null)}
+                  >
+                    Pay Later
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

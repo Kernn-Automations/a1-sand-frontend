@@ -11,7 +11,7 @@ export const exportStoreComparisonToExcel = (selectedNames, reportData) => {
   const stores = reportData.stores;
 
   // Header rows
-  const companyRow = ["Feed Bazaar"];
+  const companyRow = ["Anjali Constructions & Materials"];
   const titleRow = ["Store Comparison Report"];
 
   // Column Headers (Multi-level)
@@ -129,7 +129,7 @@ export const exportStoreComparisonToPDF = async (selectedNames, reportData) => {
 
     doc.setFontSize(8);
     doc.setTextColor("#a92427");
-    doc.text("© Feed Bazaar Private Limited", pageWidth / 2, pageHeight - 20, { align: "center" });
+    doc.text("© Anjali Constructions and Materials", pageWidth / 2, pageHeight - 20, { align: "center" });
     doc.setTextColor(0);
     doc.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 50, pageHeight - 20);
   };

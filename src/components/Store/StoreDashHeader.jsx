@@ -45,7 +45,7 @@ function StoreDashHeader({
             {!showMobileSearch && (
               <div className={styles.mobileHeaderCenter} style={{ justifyContent: 'flex-start' }}>
                 <Logo />
-                <p className={styles.brand}>Feed Bazaar Pvt Ltd</p>
+                <p className={styles.brand}>Anjali Constructions & Materials</p>
               </div>
             )}
             
@@ -120,7 +120,7 @@ function StoreDashHeader({
       <div className={styles.header}>
         <div className="row justify-content-between align-items-center" style={{ width: '100%', margin: 0 }}>
           <div className={`col-auto ${styles.headcontentTitle}`}>
-            <p className={styles.brand}>Feed Bazaar Pvt Ltd</p>
+            <p className={styles.brand}>Anjali Constructions & Materials</p>
           </div>
           <div className={`col-auto ${styles.headcontent}`}>
             <div className={styles.headerRight}>

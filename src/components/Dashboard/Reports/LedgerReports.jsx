@@ -351,12 +351,9 @@ function LedgerReports({navigate}) {
       {showReport && selectedCustomerDetails && (
         <div className="row m-0 p-3">
           <div className="col-12 text-center">
-            <h3 className="fw-bold mb-2">FB AGRI VET PRIVATE LIMITED</h3>
-            <div className="mb-2">CS NO 3651,</div>
-            <div className="mb-2">Kachare Housing Society,</div>
-            <div className="mb-2">JAYSINGPUR KOLHAPUR ROAD</div>
-            <div className="mb-2">SAMBHJIPUR, Jaysingpur, Kolhapur,, Maharashtra - 416101</div>
-            <div className="mb-3">E-Mail :finance@feedbazaar.in</div>
+            <h3 className="fw-bold mb-2">ANJALI CONSTRUCTIONS & MATERIALS</h3>
+            <div className="mb-1 text-muted">Sy. No. 120/A, Quarry Road, Main Yard, Hyderabad, Telangana - 500001</div>
+            <div className="mb-3 text-muted">Materials & Aggregates Supply</div>
 
             <h5 className="fw-bold mb-1">{selectedCustomerDetails.name}</h5>
             <div className="mb-1">Ledger Account</div>
