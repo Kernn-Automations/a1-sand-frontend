@@ -89,6 +89,7 @@ export default function LicenseSettingsPage() {
     orchestratorUrl: "",
   });
   const [savingManualConfig, setSavingManualConfig] = useState(false);
+  const [requiresReconfigure, setRequiresReconfigure] = useState(false);
   const [showAddPackageModal, setShowAddPackageModal] = useState(false);
   const [packageFormData, setPackageFormData] = useState({
     package_code: "",
@@ -289,6 +290,7 @@ export default function LicenseSettingsPage() {
   const handleConnectHandshake = async () => {
     try {
       setConnectingHandshake(true);
+      setRequiresReconfigure(false);
       const res = await axios.post(
         `${API_URL}/api/licensing/handshake/initiate`,
         { forceOnboard: true },
@@ -299,10 +301,11 @@ export default function LicenseSettingsPage() {
         await loadSuperAdminData();
       }
     } catch (err) {
-      setStatusMessage({
-        type: "error",
-        text: err.response?.data?.message || err.response?.data?.error || "Server connection failed.",
-      });
+      const errData = err.response?.data;
+      const msg = errData?.message || errData?.error || "Server connection failed.";
+      const needsConfig = Boolean(errData?.requiresReconfigure) || err.response?.status === 401;
+      setRequiresReconfigure(needsConfig);
+      setStatusMessage({ type: "error", text: msg });
       await loadSuperAdminData();
     } finally {
       setConnectingHandshake(false);
@@ -530,13 +533,41 @@ export default function LicenseSettingsPage() {
       {statusMessage.text && (
         <div className={`lic-alert-banner ${statusMessage.type}`}>
           <span>{statusMessage.text}</span>
-          <button
-            type="button"
-            onClick={() => setStatusMessage({ type: "", text: "" })}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "inherit" }}
-          >
-            <X size={16} />
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {/* When a 401 (bad API key) occurs, show direct Configure CTA */}
+            {requiresReconfigure && statusMessage.type === "error" && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusMessage({ type: "", text: "" });
+                  setRequiresReconfigure(false);
+                  setCurrentMode("superadmin");
+                  setSuperAdminTab("connection");
+                  handleOpenConfigModal();
+                }}
+                style={{
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1px solid rgba(255,255,255,0.5)",
+                  borderRadius: "6px",
+                  padding: "3px 10px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  color: "inherit",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Configure Credentials →
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => { setStatusMessage({ type: "", text: "" }); setRequiresReconfigure(false); }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "inherit" }}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
       )}
 
